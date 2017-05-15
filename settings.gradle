@@ -1,0 +1,3 @@
+include ':vectormap_android', ':vectormap_android', ':sample'
+rootProject.name = 'vectormap'
+
