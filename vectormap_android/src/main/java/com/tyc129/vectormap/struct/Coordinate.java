@@ -8,21 +8,21 @@ package com.tyc129.vectormap.struct;
  * @author 谈永成
  * @version 1.0
  */
-class Coordinate {
+public class Coordinate {
     private String id;
     private float oriX;
     private float oriY;
     private float oriZ;
     private float rotateDeg;
-    private Coordinate rootCoordinate;
+    private Coordinate postCoordinate;
 
-    Coordinate(String id) {
+    public Coordinate(String id) {
         this(id, null);
     }
 
-    Coordinate(String id, Coordinate rootCoordinate) {
+    public Coordinate(String id, Coordinate postCoordinate) {
         this.id = id;
-        this.rootCoordinate = rootCoordinate;
+        this.postCoordinate = postCoordinate;
     }
 
     @Override
@@ -33,55 +33,55 @@ class Coordinate {
                 ", oriY=" + oriY +
                 ", oriZ=" + oriZ +
                 ", rotateDeg=" + rotateDeg +
-                ", rootCoordinate=" + rootCoordinate +
+                ", postCoordinate=" + postCoordinate +
                 '}';
     }
 
-    String getId() {
+    public String getId() {
         return id;
     }
 
-    void setId(String id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    float getOriX() {
+    public float getOriX() {
         return oriX;
     }
 
-    void setOriX(float oriX) {
+    public void setOriX(float oriX) {
         this.oriX = oriX;
     }
 
-    float getOriY() {
+    public float getOriY() {
         return oriY;
     }
 
-    void setOriY(float oriY) {
+    public void setOriY(float oriY) {
         this.oriY = oriY;
     }
 
-    float getOriZ() {
+    public float getOriZ() {
         return oriZ;
     }
 
-    void setOriZ(float oriZ) {
+    public void setOriZ(float oriZ) {
         this.oriZ = oriZ;
     }
 
-    float getRotateDeg() {
+    public float getRotateDeg() {
         return rotateDeg;
     }
 
-    void setRotateDeg(float rotateDeg) {
+    public void setRotateDeg(float rotateDeg) {
         this.rotateDeg = rotateDeg;
     }
 
-    public Coordinate getRootCoordinate() {
-        return rootCoordinate;
+    public Coordinate getPostCoordinate() {
+        return postCoordinate;
     }
 
-    public void setRootCoordinate(Coordinate rootCoordinate) {
-        this.rootCoordinate = rootCoordinate;
+    public void setPostCoordinate(Coordinate postCoordinate) {
+        this.postCoordinate = postCoordinate;
     }
 }
