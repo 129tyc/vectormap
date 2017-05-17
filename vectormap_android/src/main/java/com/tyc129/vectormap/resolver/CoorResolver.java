@@ -5,15 +5,10 @@ import android.util.Log;
 import com.tyc129.vectormap.struct.Coordinate;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.helpers.XMLReaderFactory;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 坐标系解析器
@@ -23,74 +18,35 @@ import java.util.List;
  * @author 谈永成
  * @version 1.0
  */
-public class CoorResolver implements Resolver<Coordinate> {
+public class CoorResolver
+        extends XMLResolver<Coordinate, CoorResolver.ContentHandler> {
     private static final String LOG_TAG = "CoorResolver";
-
-    private boolean isReady;
-    private InputStream inputStream;
     private List<Coordinate> coordinates;
-    private XMLReader xmlReader;
-    private ContentHandler handler;
+    private ContentHandler contentHandler;
 
 
     @Override
     public void initialize() {
-        if (xmlReader == null) {
-            try {
-                xmlReader = XMLReaderFactory.createXMLReader();
-            } catch (SAXException e) {
-                e.printStackTrace();
-            }
-        }
-        if (handler == null) {
-            handler = new ContentHandler();
-        }
+        super.initialize();
         if (coordinates == null) {
             coordinates = new ArrayList<>();
         } else {
             coordinates.clear();
         }
-    }
-
-    @Override
-    public boolean importSource(InputStream stream) {
-        boolean flag = closeInputStream();
-        if (inputStream == null) {
-            inputStream = stream;
+        if (contentHandler == null) {
+            contentHandler = new ContentHandler();
         }
-        return flag;
+        super.setContentHandler(contentHandler);
     }
 
     @Override
     public boolean isReady() {
-        isReady = inputStream != null &
-                xmlReader != null &
-                handler != null &
-                coordinates != null;
-        return isReady;
-    }
-
-    @Override
-    public void doParse() {
-        if (isReady) {
-            xmlReader.setContentHandler(handler);
-            try {
-                xmlReader.parse(new InputSource(inputStream));
-            } catch (IOException | SAXException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-            }
-        }
+        return coordinates != null && super.isReady();
     }
 
     @Override
     public void destroy() {
-        if (xmlReader != null) {
-            xmlReader = null;
-        }
-        if (handler != null) {
-            handler = null;
-        }
-        closeInputStream();
+        super.destroy();
         if (coordinates != null) {
             coordinates.clear();
             coordinates = null;
@@ -107,71 +63,29 @@ public class CoorResolver implements Resolver<Coordinate> {
         return coordinates;
     }
 
-    private boolean closeInputStream() {
-        if (inputStream != null) {
-            try {
-                inputStream.close();
-                inputStream = null;
-            } catch (IOException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private class CoorErrorHandler implements ErrorHandler {
-
-        @Override
-        public void warning(SAXParseException e) throws SAXException {
-
-        }
-
-        @Override
-        public void error(SAXParseException e) throws SAXException {
-
-        }
-
-        @Override
-        public void fatalError(SAXParseException e) throws SAXException {
-
-        }
-    }
-
-    private class ContentHandler extends DefaultHandler {
+    class ContentHandler extends DefaultHandler {
+        private static final String LOG_TAG = "CoorHandler";
+        String id = null;
+        Coordinate postCoor = null;
+        float oriX = 0f;
+        float oriY = 0f;
+        float oriZ = 0f;
+        float rotateDeg = 0f;
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-            String id = null;
-            Coordinate postCoor = null;
-            float oriX = 0f;
-            float oriY = 0f;
-            float oriZ = 0f;
-            float rotateDeg = 0f;
-            switch (localName) {
-                case "id": {
-                    id = attributes.getValue("id");
-                    break;
-                }
-                case "oriX": {
+//            Log.i(LOG_TAG, "Parse--->" + localName);
+//            System.out.println(localName + "--" + qName);
+            if (localName.equals("Coordinate") ||
+                    qName.equals("Coordinate")) {
+                id = attributes.getValue("id");
+                if (id != null && !id.equals("")) {
                     oriX = Float.parseFloat(attributes.getValue("oriX"));
-                    break;
-                }
-                case "oriY": {
                     oriY = Float.parseFloat(attributes.getValue("oriY"));
-                    break;
-                }
-                case "oriZ": {
                     oriZ = Float.parseFloat(attributes.getValue("oriZ"));
-                    break;
-                }
-                case "rotateDeg": {
                     rotateDeg = Float.parseFloat(attributes.getValue("rotateDeg"));
-                    break;
-                }
-                case "postCoordinate": {
                     String postId = attributes.getValue("postCoordinate");
-                    if (!postId.equals("")) {
+                    if (postId != null && !postId.equals("")) {
                         for (Coordinate e :
                                 coordinates) {
                             if (e.getId().equals(postId)) {
@@ -180,16 +94,14 @@ public class CoorResolver implements Resolver<Coordinate> {
                             }
                         }
                     }
-                    break;
+                    Coordinate coordinate = new Coordinate(id, postCoor);
+                    coordinate.setOriX(oriX);
+                    coordinate.setOriY(oriY);
+                    coordinate.setOriZ(oriZ);
+                    coordinate.setRotateDeg(rotateDeg);
+                    coordinates.add(coordinate);
                 }
-            }
-            if (id != null && !id.equals("")) {
-                Coordinate coordinate = new Coordinate(id, postCoor);
-                coordinate.setOriX(oriX);
-                coordinate.setOriY(oriY);
-                coordinate.setOriZ(oriZ);
-                coordinate.setRotateDeg(rotateDeg);
-                coordinates.add(coordinate);
+
             }
         }
     }

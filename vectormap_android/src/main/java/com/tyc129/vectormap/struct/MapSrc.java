@@ -1,5 +1,7 @@
 package com.tyc129.vectormap.struct;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +14,7 @@ import java.util.Map;
  * @version 1.0
  */
 public class MapSrc {
-    enum MetricUnit {
+    public enum MetricUnit {
         PX,
         DP,
     }
@@ -24,7 +26,12 @@ public class MapSrc {
     private Coordinate rootCoordinate;
     private List<Road> roads;
     private List<Interest> interests;
+    private List<LinkPoint> points;
+    private List<LinePath> paths;
+    private List<ShapeZone> zones;
+    private List<Coordinate> coordinates;
     private Map<String, String> tags;
+
 
     public MapSrc(String id) {
         this(id, null);
@@ -33,6 +40,27 @@ public class MapSrc {
     public MapSrc(String id, Coordinate rootCoordinate) {
         this.id = id;
         this.rootCoordinate = rootCoordinate;
+        roads = new ArrayList<>();
+        interests = new ArrayList<>();
+        tags = new HashMap<>();
+    }
+
+    public void destory() {
+        if (interests != null) {
+            interests.clear();
+            interests = null;
+        }
+        if (roads != null) {
+            roads.clear();
+            roads = null;
+        }
+        if (tags != null) {
+            tags.clear();
+            tags = null;
+        }
+        rootCoordinate = null;
+        id = null;
+        unit = null;
     }
 
     public String getId() {
@@ -89,6 +117,38 @@ public class MapSrc {
 
     public void setInterests(List<Interest> interests) {
         this.interests = interests;
+    }
+
+    public List<LinkPoint> getPoints() {
+        return points;
+    }
+
+    public void setPoints(List<LinkPoint> points) {
+        this.points = points;
+    }
+
+    public List<LinePath> getPaths() {
+        return paths;
+    }
+
+    public void setPaths(List<LinePath> paths) {
+        this.paths = paths;
+    }
+
+    public List<ShapeZone> getZones() {
+        return zones;
+    }
+
+    public void setZones(List<ShapeZone> zones) {
+        this.zones = zones;
+    }
+
+    public List<Coordinate> getCoordinates() {
+        return coordinates;
+    }
+
+    public void setCoordinates(List<Coordinate> coordinates) {
+        this.coordinates = coordinates;
     }
 
     public Map<String, String> getTags() {
