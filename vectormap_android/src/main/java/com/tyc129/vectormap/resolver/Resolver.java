@@ -35,7 +35,7 @@ public interface Resolver<T> {
     /**
      * 启动数据解析
      */
-    void doParse();
+    void doParse() throws Exception;
 
     /**
      * 清理解析器，关闭所有使用到的域和变量并置为null

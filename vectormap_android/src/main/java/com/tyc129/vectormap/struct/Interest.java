@@ -9,7 +9,7 @@ package com.tyc129.vectormap.struct;
  * @version 1.0
  */
 public class Interest extends Point {
-    public  enum InterestType {
+    public enum InterestType {
         BUILDING,
         TOILET,
         ENTRANCE,
@@ -31,7 +31,7 @@ public class Interest extends Point {
     private ImportantLevel level;
     private String innerId;
 
-    public  Interest(String id) {
+    public Interest(String id) {
         super(id);
     }
 

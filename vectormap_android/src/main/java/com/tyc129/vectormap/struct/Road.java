@@ -1,5 +1,6 @@
 package com.tyc129.vectormap.struct;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,7 +16,7 @@ public class Road extends Path {
      * 道路属性
      * 可多选，对道路的补充描述
      */
-    enum RoadAttribute {
+    public enum RoadAttribute {
         ONEWAY,
         TIME_LIMIT,
         DANGER
@@ -25,7 +26,7 @@ public class Road extends Path {
      * 通过等级
      * 表示该道路允许通过的对象分类
      */
-    enum PassLevel {
+    public enum PassLevel {
         NORMAL,
         VECHILE,
         NON_MOTOR,
@@ -37,7 +38,7 @@ public class Road extends Path {
      * 可通行情况
      * 道路是否拥堵或通畅
      */
-    enum TrafficCondition {
+    public enum TrafficCondition {
         BROKEN,
         CONGESTION,
         NORMAL,
@@ -48,7 +49,7 @@ public class Road extends Path {
      * 道路等级
      * 影响到缩放时的可见性
      */
-    enum RoadLevel {
+    public enum RoadLevel {
         USERSET,
         FAST,
         MAIN,
@@ -69,6 +70,7 @@ public class Road extends Path {
 
     public Road(String id, Coordinate coordinate) {
         super(id, coordinate);
+        attributes = new ArrayList<>();
     }
 
     @Override
@@ -86,7 +88,9 @@ public class Road extends Path {
     }
 
     public void setAttributes(List<RoadAttribute> attributes) {
-        this.attributes = attributes;
+        if (attributes != null) {
+            this.attributes.addAll(attributes);
+        }
     }
 
     public RoadLevel getRoadLevel() {

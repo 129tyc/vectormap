@@ -8,7 +8,7 @@ package com.tyc129.vectormap.struct;
  * @author 谈永成
  * @version 1.0
  */
-abstract class Point {
+public abstract class Point {
     private String id;
     private float posX;
     private float posY;
@@ -35,27 +35,27 @@ abstract class Point {
                 '}';
     }
 
-    String getId() {
+    public String getId() {
         return id;
     }
 
-    void setId(String id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    float getPosX() {
+    public float getPosX() {
         return posX;
     }
 
-    void setPosX(float posX) {
+    public void setPosX(float posX) {
         this.posX = posX;
     }
 
-    float getPosY() {
+    public float getPosY() {
         return posY;
     }
 
-    void setPosY(float posY) {
+    public void setPosY(float posY) {
         this.posY = posY;
     }
 
@@ -67,11 +67,11 @@ abstract class Point {
         this.posZ = posZ;
     }
 
-    Coordinate getCoordinate() {
+    public Coordinate getCoordinate() {
         return coordinate;
     }
 
-    void setCoordinate(Coordinate coordinate) {
+    public void setCoordinate(Coordinate coordinate) {
         this.coordinate = coordinate;
     }
 }

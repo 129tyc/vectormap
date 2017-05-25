@@ -81,15 +81,16 @@ public abstract class XMLResolver<T, H extends DefaultHandler>
     }
 
     @Override
-    public void doParse() {
+    public void doParse() throws IOException, SAXException {
         if (isReady()) {
             reader.setContentHandler(contentHandler);
             reader.setErrorHandler(errorHandler);
-            try {
-                reader.parse(new InputSource(inputStream));
-            } catch (IOException | SAXException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-            }
+            reader.parse(new InputSource(inputStream));
+//            try {
+//
+//            } catch (IOException | SAXException e) {
+//                Log.e(LOG_TAG, e.getMessage(), e);
+//            }
         }
     }
 

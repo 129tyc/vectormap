@@ -3,6 +3,7 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/CoorResolverTest.java" charset="GBK" />
     <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/MapResolverTest.java" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/TagResolverTest.java" charset="UTF-8" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>

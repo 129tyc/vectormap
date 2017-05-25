@@ -16,4 +16,12 @@ public class LinkPoint extends Point {
     public LinkPoint(String id, Coordinate coordinate) {
         super(id, coordinate);
     }
+
+    public LinkPoint(String id, Coordinate coordinate,
+                     float posX, float posY, float posZ) {
+        super(id, coordinate);
+        this.setPosX(posX);
+        this.setPosY(posY);
+        this.setPosZ(posZ);
+    }
 }
