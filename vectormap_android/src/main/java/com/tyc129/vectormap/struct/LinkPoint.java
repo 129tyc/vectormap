@@ -9,7 +9,7 @@ package com.tyc129.vectormap.struct;
  * @version 1.0
  */
 public class LinkPoint extends Point {
-    LinkPoint(String id) {
+    public LinkPoint(String id) {
         super(id);
     }
 

@@ -41,11 +41,13 @@ public class MapSrc {
         this.id = id;
         this.rootCoordinate = rootCoordinate;
         roads = new ArrayList<>();
+        paths = new ArrayList<>();
+        points = new ArrayList<>();
         interests = new ArrayList<>();
         tags = new HashMap<>();
     }
 
-    public void destory() {
+    public void destroy() {
         if (interests != null) {
             interests.clear();
             interests = null;

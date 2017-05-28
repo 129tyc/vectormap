@@ -3,12 +3,9 @@ package com.tyc129.vectormap.resolver;
 import com.tyc129.vectormap.struct.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.helpers.XMLReaderFactory;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 地图解析器
@@ -39,7 +36,7 @@ public class MapResolver
     public void destroy() {
         super.destroy();
         if (mapSrc != null) {
-            mapSrc.destory();
+            mapSrc.destroy();
             mapSrc = null;
         }
     }

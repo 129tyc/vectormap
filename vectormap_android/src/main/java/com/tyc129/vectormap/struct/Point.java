@@ -13,6 +13,9 @@ public abstract class Point {
     private float posX;
     private float posY;
     private float posZ;
+    private float rootPosX;
+    private float rootPosY;
+    private float rootPosZ;
     private Coordinate coordinate;
 
     Point(String id) {
@@ -21,7 +24,7 @@ public abstract class Point {
 
     public Point(String id, Coordinate coordinate) {
         this.id = id;
-        this.coordinate = coordinate;
+        setCoordinate(coordinate);
     }
 
     @Override
@@ -31,6 +34,9 @@ public abstract class Point {
                 ", posX=" + posX +
                 ", posY=" + posY +
                 ", posZ=" + posZ +
+                ", rootPosX=" + rootPosX +
+                ", rootPosY=" + rootPosY +
+                ", rootPosZ=" + rootPosZ +
                 ", coordinate=" + coordinate.toString() +
                 '}';
     }
@@ -43,12 +49,43 @@ public abstract class Point {
         this.id = id;
     }
 
+    public float getRootPosX() {
+        return rootPosX;
+    }
+
+    public float getRootPosY() {
+        return rootPosY;
+    }
+
+    public float getRootPosZ() {
+        return rootPosZ;
+    }
+
     public float getPosX() {
         return posX;
     }
 
+    private void calculateRootPos() {
+        rootPosX = posX;
+        rootPosY = posY;
+        rootPosZ = posZ;
+        if (coordinate != null) {
+            rootPosX += coordinate.getOriX();
+            rootPosY += coordinate.getOriY();
+            rootPosZ += coordinate.getOriZ();
+            Coordinate temp = coordinate;
+            while (temp.getPostCoordinate() != null) {
+                temp = temp.getPostCoordinate();
+                rootPosX += temp.getOriX();
+                rootPosY += temp.getOriY();
+                rootPosZ += temp.getOriZ();
+            }
+        }
+    }
+
     public void setPosX(float posX) {
         this.posX = posX;
+        calculateRootPos();
     }
 
     public float getPosY() {
@@ -57,14 +94,17 @@ public abstract class Point {
 
     public void setPosY(float posY) {
         this.posY = posY;
+        calculateRootPos();
     }
 
     public float getPosZ() {
         return posZ;
     }
 
+
     public void setPosZ(float posZ) {
         this.posZ = posZ;
+        calculateRootPos();
     }
 
     public Coordinate getCoordinate() {
@@ -73,5 +113,6 @@ public abstract class Point {
 
     public void setCoordinate(Coordinate coordinate) {
         this.coordinate = coordinate;
+        calculateRootPos();
     }
 }
