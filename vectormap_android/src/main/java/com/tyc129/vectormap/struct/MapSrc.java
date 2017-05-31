@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.tyc129.vectormap.utils.MathUtils.getDistance;
+
 /**
  * 地图
  * 地图元素的集合，包含地图的大小、单位等属性
@@ -63,6 +65,52 @@ public class MapSrc {
         rootCoordinate = null;
         id = null;
         unit = null;
+    }
+
+    /**
+     * 通过坐标位置找到重叠对应的点
+     * 不支持路径
+     *
+     * @param x      X轴位置
+     * @param y      Y轴位置
+     * @param maxDis 判定为重叠的最大距离半径
+     * @return 重叠点对应的id, 若有多个点则返回最近的点，若没有重叠返回null
+     */
+    public String findPointByPos(float x, float y, float maxDis) {
+        String id = findPointByPos(x, y, maxDis, interests);
+        if (id == null) {
+            id = findPointByPos(x, y, maxDis, points);
+        }
+        return id;
+    }
+
+    /**
+     * 通过坐标位置找到重叠对应的点
+     * 不支持路径
+     *
+     * @param x      X轴位置
+     * @param y      Y轴位置
+     * @param maxDis 判定为重叠的最大距离半径
+     * @param points 需要查找的点集
+     * @return 重叠点对应的id, 若有多个点则返回最近的点，若没有重叠返回null
+     */
+    String findPointByPos(float x, float y, float maxDis,
+                          List<? extends Point> points) {
+        double dis;
+        float ex;
+        float ey;
+        double min = maxDis;
+        for (Point e :
+                points) {
+            ex = e.getRootPosX();
+            ey = e.getPosX();
+            dis = getDistance(ex, ey, x, y);
+            if (dis < min) {
+                id = e.getId();
+                min = dis;
+            }
+        }
+        return id;
     }
 
     public String getId() {

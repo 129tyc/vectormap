@@ -74,6 +74,30 @@ public class Road extends Path {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        Road road = (Road) o;
+
+        return (attributes != null ? attributes.equals(road.attributes) : road.attributes == null) &&
+                roadLevel == road.roadLevel &&
+                condition == road.condition &&
+                passLevel == road.passLevel;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
+        result = 31 * result + (roadLevel != null ? roadLevel.hashCode() : 0);
+        result = 31 * result + (condition != null ? condition.hashCode() : 0);
+        result = 31 * result + (passLevel != null ? passLevel.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Road{" +
                 "attributes=" + attributes +

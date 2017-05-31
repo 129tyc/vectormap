@@ -26,6 +26,32 @@ public class Coordinate {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Coordinate that = (Coordinate) o;
+
+        if (Float.compare(that.oriX, oriX) != 0) return false;
+        if (Float.compare(that.oriY, oriY) != 0) return false;
+        if (Float.compare(that.oriZ, oriZ) != 0) return false;
+        if (Float.compare(that.rotateDeg, rotateDeg) != 0) return false;
+        if (!id.equals(that.id)) return false;
+        return postCoordinate != null ? postCoordinate.equals(that.postCoordinate) : that.postCoordinate == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        result = 31 * result + (oriX != +0.0f ? Float.floatToIntBits(oriX) : 0);
+        result = 31 * result + (oriY != +0.0f ? Float.floatToIntBits(oriY) : 0);
+        result = 31 * result + (oriZ != +0.0f ? Float.floatToIntBits(oriZ) : 0);
+        result = 31 * result + (rotateDeg != +0.0f ? Float.floatToIntBits(rotateDeg) : 0);
+        result = 31 * result + (postCoordinate != null ? postCoordinate.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Coordinate{" +
                 "id='" + id + '\'' +

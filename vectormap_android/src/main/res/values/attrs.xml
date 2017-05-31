@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="VectorMapView">
+        <!--是否显示标签-->
+        <attr name="showTags" format="boolean"/>
+        <!--允许旋转-->
+        <attr name="allowRotate" format="boolean"/>
+        <!--<attr name="allowSkew" format="boolean"/>-->
+        <!--允许缩放-->
+        <attr name="allowScale" format="boolean"/>
+        <!--允许移动-->
+        <attr name="allowTranslate" format="boolean"/>
+        <!--允许点击（兴趣点找到对应id）-->
+        <attr name="allowClick" format="boolean"/>
+        <!--允许视角突破地图边界-->
+        <attr name="allowBreakBoundary" format="boolean"/>
+        <!--地图填充类型-->
+        <attr name="mapFillType" format="enum">
+            <enum name="def" value="0"/>
+            <enum name="min" value="1"/>
+            <enum name="max" value="2"/>
+        </attr>
+        <!--最大缩放绝对比例-->
+        <attr name="maxScale" format="float"/>
+        <!--最小缩放绝对比例-->
+        <attr name="minScale" format="float"/>
+        <!--一次放大的相对比例-->
+        <attr name="scaleOneTap" format="float"/>
+        <!--地图起始视点X轴位置-->
+        <attr name="originalPositionX" format="float"/>
+        <!--地图起始视点Y轴位置-->
+        <attr name="originalPositionY" format="float"/>
+        <!--地图起始视点旋转角度-->
+        <attr name="originalRotate" format="float"/>
+        <!--点击敏感度（点击位置的搜索范围大小）-->
+        <attr name="clickSensitivity" format="float"/>
+        <!--<attr name="originalSkew" format="float"/>-->
+    </declare-styleable>
+</resources>

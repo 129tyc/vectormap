@@ -1,5 +1,7 @@
 package com.tyc129.vectormap.struct;
 
+import android.support.annotation.NonNull;
+
 /**
  * 点
  * 矢量地图上的最基础结构，用于标定位置，给路径提供端点，展示兴趣热点等
@@ -18,13 +20,37 @@ public abstract class Point {
     private float rootPosZ;
     private Coordinate coordinate;
 
-    Point(String id) {
+    public Point(@NonNull String id) {
         this(id, null);
     }
 
-    public Point(String id, Coordinate coordinate) {
+    public Point(@NonNull String id, Coordinate coordinate) {
         this.id = id;
         setCoordinate(coordinate);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Point point = (Point) o;
+
+        return Float.compare(point.posX, posX) == 0 &&
+                Float.compare(point.posY, posY) == 0 &&
+                Float.compare(point.posZ, posZ) == 0 &&
+                id.equals(point.id) &&
+                (coordinate != null ? coordinate.equals(point.coordinate) : point.coordinate == null);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        result = 31 * result + (posX != +0.0f ? Float.floatToIntBits(posX) : 0);
+        result = 31 * result + (posY != +0.0f ? Float.floatToIntBits(posY) : 0);
+        result = 31 * result + (posZ != +0.0f ? Float.floatToIntBits(posZ) : 0);
+        result = 31 * result + (coordinate != null ? coordinate.hashCode() : 0);
+        return result;
     }
 
     @Override

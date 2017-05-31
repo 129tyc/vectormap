@@ -25,6 +25,30 @@ public abstract class Path {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Path path = (Path) o;
+
+        return id.equals(path.id) &&
+                (startPoint != null ? startPoint.equals(path.startPoint) : path.startPoint == null) &&
+                (endPoint != null ? endPoint.equals(path.endPoint) : path.endPoint == null) &&
+                (pathData != null ? pathData.equals(path.pathData) : path.pathData == null) &&
+                (coordinate != null ? coordinate.equals(path.coordinate) : path.coordinate == null);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        result = 31 * result + (startPoint != null ? startPoint.hashCode() : 0);
+        result = 31 * result + (endPoint != null ? endPoint.hashCode() : 0);
+        result = 31 * result + (pathData != null ? pathData.hashCode() : 0);
+        result = 31 * result + (coordinate != null ? coordinate.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Path{" +
                 "id='" + id + '\'' +
@@ -33,6 +57,20 @@ public abstract class Path {
                 ", pathData='" + pathData + '\'' +
                 ", coordinate=" + coordinate.toString() +
                 '}';
+    }
+
+    public android.graphics.Path transfer2Render() {
+        if (this.startPoint != null &&
+                this.endPoint != null &&
+                this.pathData != null) {
+            android.graphics.Path path = new android.graphics.Path();
+            path.moveTo(this.startPoint.getRootPosX(), this.startPoint.getRootPosY());
+            if (this.pathData.equals("l")) {
+                path.lineTo(this.endPoint.getRootPosX(), this.endPoint.getRootPosY());
+            }
+            return path;
+        }
+        return null;
     }
 
     public String getId() {

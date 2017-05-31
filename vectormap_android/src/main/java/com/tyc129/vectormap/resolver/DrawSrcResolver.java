@@ -9,6 +9,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -116,9 +117,13 @@ public class DrawSrcResolver
                 String specifyType = attributes.getValue("specifyType");
                 String specifyData = attributes.getValue("specifyData");
                 String scale = attributes.getValue("scale");
+                String textMargin = attributes.getValue("textMargin");
                 src.setDrawType(DrawSrc.DrawType.valueOf(tag.toUpperCase()));
                 if (scale != null) {
                     src.setScale(Float.parseFloat(scale));
+                }
+                if (textMargin != null) {
+                    src.setTextMargin(Float.parseFloat(textMargin));
                 }
                 if (paintType != null) {
                     src.setPaintType(DrawSrc.PaintType.valueOf(paintType.toUpperCase()));

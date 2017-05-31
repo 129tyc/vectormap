@@ -3,6 +3,9 @@ package com.tyc129.vectormap.view;
 import android.graphics.Bitmap;
 import android.graphics.Paint;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Code on 2017/5/26 0026.
  *
@@ -28,6 +31,7 @@ public class DrawSrc {
     private Paint paint;
     private String bitmapId;
     private float scale;
+    private float textMargin;
 
     public DrawSrc() {
     }
@@ -38,6 +42,14 @@ public class DrawSrc {
 
     public void setScale(float scale) {
         this.scale = scale;
+    }
+
+    public float getTextMargin() {
+        return textMargin;
+    }
+
+    public void setTextMargin(float textMargin) {
+        this.textMargin = textMargin;
     }
 
     public DrawType getDrawType() {

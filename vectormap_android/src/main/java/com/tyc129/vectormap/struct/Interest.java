@@ -40,6 +40,28 @@ public class Interest extends Point {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        Interest interest = (Interest) o;
+
+        return type == interest.type &&
+                level == interest.level &&
+                (innerId != null ? innerId.equals(interest.innerId) : interest.innerId == null);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (level != null ? level.hashCode() : 0);
+        result = 31 * result + (innerId != null ? innerId.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Interest{" +
                 "type=" + type +

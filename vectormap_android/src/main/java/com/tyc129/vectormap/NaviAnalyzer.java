@@ -5,6 +5,8 @@ import com.tyc129.vectormap.struct.*;
 
 import java.util.*;
 
+import static com.tyc129.vectormap.utils.MathUtils.getDistance;
+
 
 /**
  * 导航分析中心
@@ -87,8 +89,12 @@ public class NaviAnalyzer {
                     break;
             }
             sUnit.outPaths.add(naviPath);
+//            if (!e.getAttributes().contains(Road.RoadAttribute.ONEWAY)) {
+//                NaviPath temp = new NaviPath(naviPath);
+//                temp.unit = sUnit;
+//                eUnit.outPaths.add(temp);
+//            }
         }
-
     }
 
     public List<Path> searchRoute(SearchType type, String sId, String eId) {
@@ -190,16 +196,6 @@ public class NaviAnalyzer {
         return -1;
     }
 
-    private float getDistance(Point p1, Point p2) {
-        float x1 = p1.getRootPosX();
-        float y1 = p1.getRootPosY();
-        x1 -= p2.getRootPosX();
-        x1 *= x1;
-        y1 -= p2.getRootPosY();
-        y1 *= y1;
-        return (float) Math.sqrt(x1 + y1);
-    }
-
     public void setSource(MapSrc mapSrc) {
         this.mapSrc = mapSrc;
     }
@@ -253,6 +249,14 @@ public class NaviAnalyzer {
 
         NaviPath() {
             types = new ArrayList<>();
+        }
+
+        NaviPath(NaviPath naviPath) {
+            this();
+            this.unit = naviPath.unit;
+            this.types.addAll(naviPath.types);
+            this.distance = naviPath.distance;
+            this.pData = naviPath.pData;
         }
     }
 }
