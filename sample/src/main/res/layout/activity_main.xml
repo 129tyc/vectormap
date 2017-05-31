@@ -2,6 +2,7 @@
 <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/activity_main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -11,8 +12,72 @@
         android:paddingBottom="@dimen/activity_vertical_margin"
         tools:context="com.tyc129.sample.MainActivity">
 
-    <TextView
-            android:layout_width="wrap_content"
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <com.tyc129.vectormap.view.VectorMapView
+                android:id="@+id/vectorMapView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:showTags="true"
+                app:mapFillType="min"
+                app:allowClick="true"
+                app:allowRotate="true"
+                app:allowTranslate="true"
+                app:allowScale="true"
+                app:allowBreakBoundary="true"
+                app:maxScale="5"
+                app:scaleOneTap="1.25"
+                android:background="@android:color/white"
+                android:layout_gravity="bottom"/>
+
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/reset"
+                android:text="重置位置"/>
+    </FrameLayout>
+
+    <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Hello World!"/>
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true">
+
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/startPos"
+                android:textSize="20sp"
+                android:text="起点"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                />
+
+        <TextView
+                android:layout_marginLeft="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/endPos"
+                android:textSize="20sp"
+                android:layout_weight="1"
+                android:text="终点"
+                android:background="@android:color/darker_gray"
+                />
+        <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/runNavi"
+                android:text="导航"
+                android:layout_weight="1.25"
+                android:textSize="17sp"/>
+        <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/clear"
+                android:text="清除"
+                android:layout_weight="1.25"
+                android:textSize="17sp"/>
+    </LinearLayout>
 </RelativeLayout>

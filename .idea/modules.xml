@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../VectorMap/VectorMap.iml" filepath="$PROJECT_DIR$/../VectorMap/VectorMap.iml" />
       <module fileurl="file://$PROJECT_DIR$/../VectorMap/sample/sample.iml" filepath="$PROJECT_DIR$/../VectorMap/sample/sample.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/vectormap.iml" filepath="$PROJECT_DIR$/.idea/modules/vectormap.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../VectorMap/.idea/modules/vectormap.iml" filepath="$PROJECT_DIR$/../VectorMap/.idea/modules/vectormap.iml" />
       <module fileurl="file://$PROJECT_DIR$/../VectorMap/.idea/modules/vectormap_android/vectormap_android.iml" filepath="$PROJECT_DIR$/../VectorMap/.idea/modules/vectormap_android/vectormap_android.iml" />
     </modules>
   </component>

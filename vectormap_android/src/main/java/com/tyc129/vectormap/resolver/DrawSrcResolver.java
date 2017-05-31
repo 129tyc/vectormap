@@ -92,7 +92,6 @@ public class DrawSrcResolver
                 paint.setTextSize(Float.parseFloat(textSize));
             }
             if (color != null) {
-                System.out.println(color);
                 paint.setColor(Color.parseColor(color.toUpperCase()));
             }
             if (strokeWidth != null) {

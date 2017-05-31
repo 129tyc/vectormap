@@ -2,6 +2,7 @@ package com.tyc129.vectormap.view;
 
 
 import android.graphics.*;
+import android.util.Log;
 import com.tyc129.vectormap.struct.*;
 import com.tyc129.vectormap.struct.Path;
 import com.tyc129.vectormap.struct.Point;
@@ -29,8 +30,8 @@ public class RenderTranslator {
     }
 
     public RenderTranslator(List<DrawSrc> drawSrcs) {
+        attributesCache = new ArrayList<>();
         setDrawSrcList(drawSrcs);
-
     }
 
     public List<DrawSrc> getDrawSrcList() {
@@ -47,21 +48,22 @@ public class RenderTranslator {
     private void refreshAttributesCache() {
         for (DrawSrc e :
                 drawSrcList) {
+
             AttributesUnit attributesUnit = new AttributesUnit();
             attributesUnit.type = e.getSpecifyType();
-            String[] temp = e.getSpecifyData().split("|");
-            for (String attr :
-                    temp) {
-                String[] temp2 = attr.split(",");
-                if (temp2.length > 2) {
-                    for (int i = 1; i < temp2.length; i++) {
-                        attributesUnit.attributes.add(temp2[i].toUpperCase());
+            if (e.getSpecifyData() != null) {
+                String[] temp = e.getSpecifyData().split(" ");
+                for (String attr :
+                        temp) {
+                    String[] temp2 = attr.split(",");
+                    if (temp2.length > 1) {
+                        for (int i = 1; i < temp2.length; i++) {
+                            attributesUnit.attributes.add(temp2[i].toUpperCase());
+                        }
                     }
                 }
             }
-            if (!attributesUnit.attributes.isEmpty()) {
-                attributesCache.add(attributesUnit);
-            }
+            attributesCache.add(attributesUnit);
         }
     }
 
@@ -106,16 +108,32 @@ public class RenderTranslator {
                 }
                 unit.setPath(e.transfer2Render());
             } else {
-                unit.setRenderBody(RenderUnit.RenderBody.PATH);
-                unit.setRenderType(RenderUnit.RenderType.PAINT);
-                for (DrawSrc drawE :
-                        drawSrcList) {
-                    if (drawE.getSpecifyType().equals("LinePath")) {
-                        unit.setPaint(drawE.getPaint());
-                        unit.setPath(e.transfer2Render());
-                        break;
+                LinePath temp = (LinePath) e;
+                DrawSrc drawSrc = null;
+                if (temp.getPathAttribute() != null) {
+                    int i;
+                    int size = attributesCache.size();
+                    for (i = 0; i < size; i++) {
+                        if (attributesCache.get(i).type.equals("LinePath") &&
+                                attributesCache.get(i).attributes.contains(temp.getPathAttribute().toString())) {
+                            break;
+                        }
+                    }
+                    drawSrc = drawSrcList.get(i);
+                } else {
+                    for (DrawSrc drawE :
+                            drawSrcList) {
+                        if (drawE.getSpecifyType().equals("LinePath") &&
+                                drawE.getSpecifyData() == null) {
+                            drawSrc = drawE;
+                            break;
+                        }
                     }
                 }
+                unit.setPaint(drawSrc.getPaint());
+                unit.setPath(temp.transfer2Render());
+                unit.setRenderBody(RenderUnit.RenderBody.PATH);
+                unit.setRenderType(RenderUnit.RenderType.PAINT);
             }
             units.add(unit);
         }
@@ -207,6 +225,7 @@ public class RenderTranslator {
                     break;
                 }
             }
+            units.add(unit);
         }
         return units;
     }

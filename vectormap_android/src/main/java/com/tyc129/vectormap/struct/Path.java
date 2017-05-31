@@ -69,8 +69,9 @@ public abstract class Path {
                 path.lineTo(this.endPoint.getRootPosX(), this.endPoint.getRootPosY());
             }
             return path;
+        } else {
+            return null;
         }
-        return null;
     }
 
     public String getId() {

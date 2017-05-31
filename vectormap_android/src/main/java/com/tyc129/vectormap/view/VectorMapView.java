@@ -15,8 +15,6 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import com.tyc129.vectormap.NaviAnalyzer;
-import com.tyc129.vectormap.VectorMap;
 import com.tyc129.vectormap.struct.MapSrc;
 import com.tyc129.vectormap_android.R;
 
@@ -185,7 +183,7 @@ public class VectorMapView extends View {
     /**
      * 地图渲染器，负责渲染地图数据
      */
-    private Render render;
+    private MapRender mapRender;
     /**
      * 主地图矩阵，负责主地图显示
      */
@@ -259,8 +257,8 @@ public class VectorMapView extends View {
         this.listener = listener;
     }
 
-    public void setRender(Render render) {
-        this.render = render;
+    public void setMapRender(MapRender mapRender) {
+        this.mapRender = mapRender;
     }
 
     /**
@@ -281,6 +279,9 @@ public class VectorMapView extends View {
             this.mapHeight *= context.getResources().getDisplayMetrics().density;
         }
         mapBox.set(0, 0, mapWidth, mapHeight);
+        if (viewPortHeight > 0 && viewPortWidth > 0) {
+            rescaleMatrix(viewPortWidth, viewPortHeight);
+        }
 //        initVariables();
         // TODO: 2017/5/1 0001 检查是否可能在加载其他地图时发生混乱
     }
@@ -332,7 +333,6 @@ public class VectorMapView extends View {
     private void getAttributes(Context context, AttributeSet attrs) {
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.VectorMapView);
         try {
-
             showTags = typedArray.getBoolean(R.styleable.VectorMapView_showTags, false);
             allowTranslate = typedArray.getBoolean(R.styleable.VectorMapView_allowTranslate, false);
             allowScale = typedArray.getBoolean(R.styleable.VectorMapView_allowScale, false);
@@ -371,9 +371,9 @@ public class VectorMapView extends View {
             tempCanvas.save();
             tempCanvas.setMatrix(mainMatrix);
             if (isAnimating) {
-                render.render2CanvasWithoutTags(tempCanvas, mainMatrix, controlDeg, controlScale);
+                mapRender.render2CanvasWithoutTags(tempCanvas, mainMatrix, controlDeg, controlScale);
             } else {
-                render.renderAll2Canvas(tempCanvas, mainMatrix, controlDeg, controlScale);
+                mapRender.renderAll2Canvas(tempCanvas, mainMatrix, controlDeg, controlScale);
             }
             tempCanvas.restore();
             canvas.drawBitmap(tempBitmap, 0, 0, null);

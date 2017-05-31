@@ -1,0 +1,18 @@
+<CoordinateList>
+    
+    <Coordinate
+                id="coor1"
+                oriX="0"
+                oriY="0"
+                oriZ="0" 
+                rotateDeg="0"
+                />
+        <Coordinate
+                id="coor2"
+                oriX="0"
+                oriY="0"
+                oriZ="0"
+                rotateDeg="0"
+                postCoordinate="coor1"
+                />" 
+    </CoordinateList>

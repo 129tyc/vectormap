@@ -1,5 +1,6 @@
 package com.tyc129.vectormap;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -33,7 +34,7 @@ import java.util.Map;
  * @author 谈永成
  * @version 1.0
  */
-public class Factory {
+public class MapFactory {
 
     public interface CallBack {
         void buildFailed(String msg);
@@ -48,7 +49,7 @@ public class Factory {
     private InputStream coorStream;
     private InputStream tagStream;
     private InputStream drawSrcStream;
-    private ProgressBar progressBar;
+    private ProgressDialog progressDialog;
     private CallBack callBack;
     private List<Coordinate> coordinates;
     private List<MapSrc> mapSrcs;
@@ -56,13 +57,14 @@ public class Factory {
     private Map<String, String> tagsMap;
     private Map<String, Bitmap> bitmapMap;
     private Map<String, List<RenderUnit>> mapRenderUnits;
+    private RenderTranslator translator;
 
-    public Factory(@NonNull Context context) {
+    public MapFactory(@NonNull Context context) {
         this.context = context;
         initialize();
     }
 
-    public Factory(@NonNull Context context, @NonNull CallBack callBack) {
+    public MapFactory(@NonNull Context context, @NonNull CallBack callBack) {
         this.context = context;
         this.callBack = callBack;
         initialize();
@@ -78,6 +80,15 @@ public class Factory {
         mapRenderUnits = new HashMap<>();
     }
 
+    public List<RenderUnit> buildRenderPaths(List<Path> paths) {
+        if (drawSrcList != null) {
+            RenderTranslator translator = new RenderTranslator(drawSrcList);
+        } else if (translator.getDrawSrcList() != drawSrcList) {
+            translator.setDrawSrcList(drawSrcList);
+        }
+        return translator.translatePaths(paths);
+    }
+
     public void build() {
         if (callBack == null) {
             return;
@@ -90,7 +101,7 @@ public class Factory {
             return;
         }
         if (isAsync) {
-            AsyncBuilder builder = new AsyncBuilder(progressBar);
+            AsyncBuilder builder = new AsyncBuilder(progressDialog);
             builder.execute("");
         } else {
             try {
@@ -116,7 +127,11 @@ public class Factory {
     }
 
     private boolean translate2Render() {
-        RenderTranslator translator = new RenderTranslator(drawSrcList);
+        if (translator == null) {
+            translator = new RenderTranslator(drawSrcList);
+        } else if (translator.getDrawSrcList() != drawSrcList) {
+            translator.setDrawSrcList(drawSrcList);
+        }
         List<Point> points = new ArrayList<>();
         List<Path> paths = new ArrayList<>();
         for (MapSrc e :
@@ -221,8 +236,8 @@ public class Factory {
         isAsync = async;
     }
 
-    public void setProgressBar(ProgressBar progressBar) {
-        this.progressBar = progressBar;
+    public void setProgressDialog(ProgressDialog progressDialog) {
+        this.progressDialog = progressDialog;
     }
 
     public void addMapRecourse(@NonNull List<InputStream> mapStreams) {
@@ -271,10 +286,18 @@ public class Factory {
     }
 
     class AsyncBuilder extends AsyncTask<String, Integer, String> {
-        private ProgressBar bar;
+        private ProgressDialog progressDialog;
+        private VectorMap result;
 
-        public AsyncBuilder(ProgressBar bar) {
-            this.bar = bar;
+        public AsyncBuilder(ProgressDialog progressDialog) {
+            this.progressDialog = progressDialog;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            if (progressDialog != null) {
+                progressDialog.show();
+            }
         }
 
         @Override
@@ -296,22 +319,22 @@ public class Factory {
                 } else {
                     publishProgress(10);
                 }
-                if (error != null && !parseMaps()) {
+                if (error == null && !parseMaps()) {
                     error = "Maps Build ERROR!";
                 } else {
                     publishProgress(30);
                 }
-                if (error != null && !parseDrawSrcs()) {
+                if (error == null && !parseDrawSrcs()) {
                     error = "DrawSrc Build ERROR!";
                 } else {
                     publishProgress(50);
                 }
-                if (error != null && !parseTags()) {
+                if (error == null && !parseTags()) {
                     error = "Tags Build ERROR!";
                 } else {
                     publishProgress(70);
                 }
-                if (error != null && !parseBitmaps()) {
+                if (error == null && !parseBitmaps()) {
                     error = "Bitmaps Build ERROR!";
                 } else {
                     publishProgress(90);
@@ -319,25 +342,38 @@ public class Factory {
                 if (error == null) {
                     translate2Render();
                     publishProgress(100);
-                    callBack.buildSuccess(new VectorMap(mapSrcs,
+                    result = new VectorMap(mapSrcs,
                             drawSrcList,
                             mapRenderUnits,
                             coordinates,
                             tagsMap,
-                            bitmapMap));
+                            bitmapMap);
+                    return null;
                 } else {
-                    callBack.buildFailed(error);
+                    return error;
                 }
             } catch (Exception e) {
-                callBack.buildFailed(e.getMessage());
+                Log.e("MapFactory", e.getMessage(), e);
+                return e.getMessage();
             }
-            return "";
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            if (progressDialog != null) {
+                progressDialog.dismiss();
+            }
+            if (s != null) {
+                callBack.buildFailed(s);
+            } else {
+                callBack.buildSuccess(result);
+            }
         }
 
         @Override
         protected void onProgressUpdate(Integer... values) {
-            if (bar != null) {
-                bar.setProgress(values[0]);
+            if (progressDialog != null) {
+                progressDialog.setProgress(values[0]);
             }
         }
     }

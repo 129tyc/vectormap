@@ -11,16 +11,12 @@ import com.tyc129.vectormap.struct.Point;
  */
 public class MathUtils {
 
-    public static float getDistance(Point p1, Point p2) {
+    public static double getDistance(Point p1, Point p2) {
         return getDistance(p1.getRootPosX(), p1.getRootPosY(), p2.getRootPosX(), p2.getRootPosY());
     }
 
-    public static float getDistance(float x1, float y1, float x2, float y2) {
-        x1 -= x2;
-        x1 *= x2;
-        y1 -= y2;
-        y1 *= y2;
-        return (float) Math.sqrt(x1 + y1);
+    public static double getDistance(float x1, float y1, float x2, float y2) {
+        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
     }
 
     public static double getDecimal(double num) {

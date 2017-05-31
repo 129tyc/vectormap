@@ -96,6 +96,7 @@ public class MapSrc {
      */
     String findPointByPos(float x, float y, float maxDis,
                           List<? extends Point> points) {
+        String id = null;
         double dis;
         float ex;
         float ey;
@@ -103,7 +104,7 @@ public class MapSrc {
         for (Point e :
                 points) {
             ex = e.getRootPosX();
-            ey = e.getPosX();
+            ey = e.getRootPosY();
             dis = getDistance(ex, ey, x, y);
             if (dis < min) {
                 id = e.getId();

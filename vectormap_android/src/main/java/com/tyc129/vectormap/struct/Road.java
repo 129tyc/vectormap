@@ -28,7 +28,7 @@ public class Road extends Path {
      */
     public enum PassLevel {
         NORMAL,
-        VECHILE,
+        VEHICLE,
         NON_MOTOR,
         PEOPLE,
         PROHIBIT

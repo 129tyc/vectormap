@@ -57,6 +57,10 @@ public class VectorMap {
         }
     }
 
+    public Map<String, String> getTags() {
+        return tagsMap;
+    }
+
     public void destroy() {
         if (this.mapSrcs != null) {
             for (MapSrc e :
@@ -82,6 +86,20 @@ public class VectorMap {
             }
         }
 
+    }
+
+    public MapSrc acquireMap(String id) {
+        for (MapSrc e :
+                mapSrcs) {
+            if (e.getId().equals(id)) {
+                return e;
+            }
+        }
+        return null;
+    }
+
+    public MapSrc acquireMainMap() {
+        return mainMapSrc;
     }
 
     public List<RenderUnit> getRenderMap(String id) {

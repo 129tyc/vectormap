@@ -39,17 +39,18 @@ public class NaviAnalyzer {
         } else {
             units.clear();
         }
-        List<Road> allRoads = new ArrayList<>();
+        List<Path> allPaths = new ArrayList<>();
         List<Point> allPoints = new ArrayList<>();
-        allRoads.addAll(mapSrc.getRoads());
+        allPaths.addAll(mapSrc.getRoads());
+        allPaths.addAll(mapSrc.getPaths());
         allPoints.addAll(mapSrc.getInterests());
         allPoints.addAll(mapSrc.getPoints());
         boolean[] checkList = new boolean[allPoints.size()];
         for (int i = 0; i < checkList.length; i++) {
             checkList[i] = false;
         }
-        for (Road e :
-                allRoads) {
+        for (Path e :
+                allPaths) {
             Point sp = e.getStartPoint();
             Point ep = e.getEndPoint();
             NaviUnit sUnit;
@@ -75,25 +76,36 @@ public class NaviAnalyzer {
             NaviPath naviPath = new NaviPath();
             naviPath.unit = eUnit;
             naviPath.pData = e.getPathData();
-            naviPath.distance = getDistance(sUnit.point, eUnit.point);
-            switch (e.getPassLevel()) {
-                case NORMAL:
-                    naviPath.types.add(SearchType.NORMAL);
-                case VECHILE:
-                    naviPath.types.add(SearchType.MOTOR);
-                case NON_MOTOR:
-                    naviPath.types.add(SearchType.NON_MOTOR);
-                case PEOPLE:
-                    naviPath.types.add(SearchType.WALK);
-                case PROHIBIT:
-                    break;
+            naviPath.distance = (float) getDistance(sUnit.point, eUnit.point);
+            if (e instanceof Road) {
+                Road temp = (Road) e;
+                switch (temp.getPassLevel()) {
+                    case NORMAL:
+                        naviPath.types.add(SearchType.NORMAL);
+                    case VEHICLE:
+                        naviPath.types.add(SearchType.MOTOR);
+                    case NON_MOTOR:
+                        naviPath.types.add(SearchType.NON_MOTOR);
+                    case PEOPLE:
+                        naviPath.types.add(SearchType.WALK);
+                    case PROHIBIT:
+                        break;
+                }
+                if (!temp.getAttributes().contains(Road.RoadAttribute.ONEWAY)) {
+                    NaviPath tempPath = new NaviPath(naviPath);
+                    tempPath.unit = sUnit;
+                    eUnit.outPaths.add(tempPath);
+                }
+            } else {
+                naviPath.types.add(SearchType.NORMAL);
+                naviPath.types.add(SearchType.MOTOR);
+                naviPath.types.add(SearchType.NON_MOTOR);
+                naviPath.types.add(SearchType.WALK);
+                NaviPath tempPath = new NaviPath(naviPath);
+                tempPath.unit = sUnit;
+                eUnit.outPaths.add(tempPath);
             }
             sUnit.outPaths.add(naviPath);
-//            if (!e.getAttributes().contains(Road.RoadAttribute.ONEWAY)) {
-//                NaviPath temp = new NaviPath(naviPath);
-//                temp.unit = sUnit;
-//                eUnit.outPaths.add(temp);
-//            }
         }
     }
 
@@ -135,10 +147,11 @@ public class NaviAnalyzer {
             for (int i = 0; i < size - 1; i++) {
                 sp = units.get(minCost.posList.get(i)).point;
                 ep = units.get(minCost.posList.get(i + 1)).point;
-                Path e = new LinePath(UUID.randomUUID().toString().replace("-", ""));
+                LinePath e = new LinePath(UUID.randomUUID().toString().replace("-", ""));
                 e.setStartPoint(sp);
                 e.setEndPoint(ep);
                 e.setPathData(minCost.pathDataList.get(i));
+                e.setPathAttribute(LinePath.PathAttribute.NAVI);
                 paths.add(e);
             }
             minCost.destroy();

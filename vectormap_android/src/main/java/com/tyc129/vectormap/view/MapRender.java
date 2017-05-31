@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import com.tyc129.vectormap.view.RenderUnit;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,8 +15,8 @@ import java.util.List;
  * @author 谈永成
  * @version 1.0
  */
-public class Render {
-    private static final String LOG_TAG = "Render";
+public class MapRender {
+    private static final String LOG_TAG = "MapRender";
 
     private Matrix tempMatrix;
     private float cerX;
@@ -23,14 +24,20 @@ public class Render {
     private float[] mapPoint;
 
     private List<RenderUnit> currentUnits;
+    private List<RenderUnit> tempUnits;
 
-    Render() {
+    public MapRender() {
         mapPoint = new float[2];
         tempMatrix = new Matrix();
+        tempUnits = new ArrayList<>();
     }
 
     public void setCurrentUnits(List<RenderUnit> currentUnits) {
         this.currentUnits = currentUnits;
+    }
+
+    public List<RenderUnit> getTempUnits() {
+        return tempUnits;
     }
 
     void render2Canvas(Canvas canvas, Matrix matrix, float rDeg, float scale,
@@ -83,6 +90,12 @@ public class Render {
                 }
             }
             canvas.restore();
+            if (!tempUnits.isEmpty()) {
+                for (RenderUnit e :
+                        tempUnits) {
+                    canvas.drawPath(e.getPath(), e.getPaint());
+                }
+            }
         }
     }
 

@@ -1,0 +1,61 @@
+<MapPaint>
+    <Point
+            paintType="bitmap"
+            specifyType="Interest"
+            specifyData="InterestType,BUILDING ImportantLevel,NORMAL"
+            src="building"
+            scale="1.0f"
+            />
+    <Point
+            paintType="bitmap"
+            specifyType="Interest"
+            specifyData="InterestType,TOILET ImportantLevel,NORMAL"
+            src="toilet"
+            scale="1.2f"
+            />
+    <Point
+            paintType="bitmap"
+            specifyType="LinkPoint"
+            src="little_circle"
+            scale="1.0f"
+            />
+    <Path
+            paintType="canvas"
+            specifyType="Road"
+            specifyData="RoadLevel,LANE PassLevel,NORMAL"
+            paintColor="BLUE"
+            strokeWidth="5.0"
+            style="STROKE"
+            alpha="100"
+            scale="1.0f"
+            />
+    <Path
+            paintType="canvas"
+            specifyType="LinePath"
+            paintColor="Green"
+            strokeWidth="5.0"
+            style="STROKE"
+            alpha="100"
+            scale="1.0f"
+            />
+    <Path
+            paintType="canvas"
+            specifyType="LinePath"
+            specifyData="PathAttribute,Navi"
+            paintColor="Red"
+            strokeWidth="10.0"
+            style="STROKE"
+            alpha="150"
+            scale="1.0f"
+            />
+    <Tag
+            paintType="canvas"
+            specifyType="all"
+            typeFace="default"
+            textAlign="center"
+            paintColor="Black"
+            textSize="50"
+            textMargin="100"
+            alpha="200"
+            />
+</MapPaint>
