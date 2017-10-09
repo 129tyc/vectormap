@@ -4,9 +4,11 @@ package com.tyc129.vectormap;
 import android.graphics.Bitmap;
 import com.tyc129.vectormap.struct.Coordinate;
 import com.tyc129.vectormap.struct.MapSrc;
+import com.tyc129.vectormap.struct.Point;
 import com.tyc129.vectormap.view.DrawSrc;
 import com.tyc129.vectormap.view.RenderUnit;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -86,6 +88,28 @@ public class VectorMap {
             }
         }
 
+    }
+
+    public boolean acquirePositionForMain(String pointId, float[] pos) {
+        return acquirePosition(pointId, pos, mainMapSrc);
+    }
+
+    public boolean acquirePosition(String pointId, float[] pos, MapSrc mapSrc) {
+        if (mapSrc != null && pos != null && pos.length >= 3 && pointId != null) {
+            List<Point> points = new ArrayList<>();
+            points.addAll(mapSrc.getInterests());
+            points.addAll(mapSrc.getPoints());
+            for (Point e :
+                    points) {
+                if (e.getId().equals(pointId)) {
+                    pos[0] = e.getRootPosX();
+                    pos[1] = e.getRootPosY();
+                    pos[2] = e.getPosZ();
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public MapSrc acquireMap(String id) {

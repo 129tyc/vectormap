@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
-    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/NaviAnalyzerTest.java" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/NaviAnalyzerTest.java" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/CoorResolverTest.java" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/DrawSrcResolverTest.java" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/MapResolverTest.java" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/NaviAnalyzerTest.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/CoorResolverTest.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/DrawSrcResolverTest.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/MapResolverTest.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/../VectorMap/vectormap_android/src/main/java/test/com/tyc129/vectormap/resolver/TagResolverTest.java" charset="UTF-8" />
     <file url="PROJECT" charset="UTF-8" />
   </component>

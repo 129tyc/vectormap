@@ -1,5 +1,6 @@
 package com.tyc129.vectormap.view;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import com.tyc129.vectormap.view.RenderUnit;
@@ -38,6 +39,37 @@ public class MapRender {
 
     public List<RenderUnit> getTempUnits() {
         return tempUnits;
+    }
+
+    /**
+     * 绘制指南针类型的图像
+     * 适用于具有独立的方向，需要进行变换才可以绘制的Bitmap
+     *
+     * @param canvas        绘制的画板
+     * @param matrix        正在使用的矩阵
+     * @param bitmap        需要绘制的位图
+     * @param directionDeg  位图方向
+     * @param controlDeg    原矩阵旋转角度
+     * @param cerX          旋转中心点X轴位置
+     * @param cerY          旋转中心点Y轴位置
+     * @param bitmapHWidth  位图宽的一半
+     * @param bitmapHHeight 位图长的一半
+     */
+    void renderBitmap2Canvas(Canvas canvas, Matrix matrix, Bitmap bitmap,
+                             float directionDeg, float controlDeg, float cerX, float cerY, float scale,
+                             float bitmapHWidth, float bitmapHHeight) {
+        scale = 1 / scale;
+        canvas.save();
+        tempMatrix.set(matrix);
+        mapPoint[0] = cerX;
+        mapPoint[1] = cerY;
+        matrix.mapPoints(mapPoint);
+        tempMatrix.postRotate(directionDeg - controlDeg, mapPoint[0], mapPoint[1]);
+        tempMatrix.postScale(scale, scale, mapPoint[0], mapPoint[1]);
+        canvas.setMatrix(tempMatrix);
+        canvas.drawBitmap(bitmap, cerX - bitmapHWidth,
+                cerY - bitmapHHeight, null);
+        canvas.restore();
     }
 
     void render2Canvas(Canvas canvas, Matrix matrix, float rDeg, float scale,

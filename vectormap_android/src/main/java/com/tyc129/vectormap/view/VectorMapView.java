@@ -8,6 +8,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.support.annotation.IntDef;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -15,6 +19,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import com.tyc129.vectormap.struct.MapSrc;
 import com.tyc129.vectormap_android.R;
 
@@ -34,9 +39,16 @@ public class VectorMapView extends View {
         /**
          * 当地图目标被点击时触发函数
          *
-         * @param id 地图目标id
+         * @param id     地图目标id
+         * @param touchX 触摸点X轴位置
+         * @param touchY 触摸点Y轴位置
          */
-        void onClickPoint(String id);
+        void onClickPoint(String id, float touchX, float touchY);
+    }
+
+    public enum CompassStyle {
+        WHOLE,
+        INDEPENDENCE
     }
 
     /**
@@ -225,6 +237,21 @@ public class VectorMapView extends View {
      */
     private Bitmap tempBitmap;
     private MapAnimateListener animateListener;
+    private Bitmap currentNarrow;
+    private float narrowHWidth;
+    private float narrowHHeight;
+    private SensorManager manager;
+    private CompassListener compassListener;
+    private Sensor aSensor;
+    private Sensor mSensor;
+    private float[] aValues;
+    private float[] mValues;
+    private float[] oValues;
+    private float narrowPosX;
+    private float narrowPosY;
+    private CompassStyle compassStyle;
+    private boolean isIndicating;
+    private int currentDirection;
 
     @IntDef({
             FILL_TYPE_DEF,
@@ -246,6 +273,60 @@ public class VectorMapView extends View {
         super(context, attrs, defStyleAttr);
         Log.i(LOG_TAG, "initialize!");
         initView(context, attrs);
+    }
+
+    public void setDirectionNarrow(Bitmap currentNarrow) {
+        this.currentNarrow = currentNarrow;
+        if (this.currentNarrow != null) {
+            narrowHWidth = currentNarrow.getWidth() >> 1;
+            narrowHHeight = currentNarrow.getHeight() >> 1;
+        }
+    }
+
+    public boolean startDirectionIndicate(CompassStyle compassStyle, float cerX, float cerY) {
+        if (manager != null &&
+                currentNarrow != null &&
+                compassStyle != null &&
+                !isIndicating) {
+            mapPoint[0] = cerX;
+            mapPoint[1] = cerY;
+            mainMatrix.mapPoints(mapPoint);
+            if (mapBox.contains(mapPoint[0], mapPoint[1])) {
+                this.compassStyle = compassStyle;
+                isIndicating = true;
+                narrowPosX = cerX;
+                narrowPosY = cerY;
+                manager.registerListener(compassListener, aSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                manager.registerListener(compassListener, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void stopDirectionIndicate() {
+        if (manager != null) {
+            manager.unregisterListener(compassListener);
+        }
+        isIndicating = false;
+    }
+
+
+    private void calculateOrientation() {
+        float[] r = new float[9];
+        SensorManager.getRotationMatrix(r, null, aValues, mValues);
+        SensorManager.getOrientation(r, oValues);
+        int nextDeg = Math.round((float) -Math.toDegrees(oValues[0]));
+        if ((nextDeg ^ currentDirection) < 0) {
+            nextDeg = nextDeg < 0 ? 360 + nextDeg : 360 - nextDeg;
+        }
+        if (Math.abs(currentDirection - nextDeg) >= 3) {
+            if (this.compassStyle == CompassStyle.WHOLE) {
+                mapRotate(nextDeg - currentDirection, narrowPosX, narrowPosY);
+            }
+            currentDirection = nextDeg;
+            invalidate();
+        }
     }
 
     /**
@@ -310,6 +391,18 @@ public class VectorMapView extends View {
         halfWidth = 0f;
         halfHeight = 0f;
         mapPoint = new float[2];
+        isIndicating = false;
+        if (this.context != null && !isInEditMode()) {
+            manager = (SensorManager) this.context.getSystemService(Context.SENSOR_SERVICE);
+            if (manager != null) {
+                aSensor = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                mSensor = manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+                compassListener = new CompassListener();
+                aValues = new float[3];
+                mValues = new float[3];
+                oValues = new float[3];
+            }
+        }
         initVariables();
         getAttributes(context, attrs);
     }
@@ -374,6 +467,11 @@ public class VectorMapView extends View {
                 mapRender.render2CanvasWithoutTags(tempCanvas, mainMatrix, controlDeg, controlScale);
             } else {
                 mapRender.renderAll2Canvas(tempCanvas, mainMatrix, controlDeg, controlScale);
+                if (isIndicating && this.compassStyle == CompassStyle.INDEPENDENCE) {
+                    mapRender.renderBitmap2Canvas(tempCanvas, mainMatrix, currentNarrow,
+                            currentDirection, controlDeg + 90, narrowPosX, narrowPosY,
+                            controlScale, narrowHWidth, narrowHHeight);
+                }
             }
             tempCanvas.restore();
             canvas.drawBitmap(tempBitmap, 0, 0, null);
@@ -517,6 +615,14 @@ public class VectorMapView extends View {
         }
     }
 
+    public void mapRotate_Raw(float rDeg, float cerX, float cerY) {
+        if (allowRotate) {
+            controlDeg += rDeg;
+            mainMatrix.postRotate(rDeg, cerX, cerY);
+            invalidate();
+        }
+    }
+
     /**
      * 地图旋转
      * 自带界面重绘
@@ -531,7 +637,7 @@ public class VectorMapView extends View {
             mapPoint[0] = cerX;
             mapPoint[1] = cerY;
             controlDeg += rDeg;
-            mainMatrix.mapPoints(mapPoint);
+            //mainMatrix.mapPoints(mapPoint);
             mainMatrix.postRotate(rDeg, mapPoint[0], mapPoint[1]);
             invalidate();
         }
@@ -573,7 +679,7 @@ public class VectorMapView extends View {
             controlScale *= scale;
             mapPoint[0] = cerX;
             mapPoint[1] = cerY;
-            mainMatrix.mapPoints(mapPoint);
+            //mainMatrix.mapPoints(mapPoint);
             if (allowBreakBoundary || scale > 1) {
                 mainMatrix.postScale(scale, scale, mapPoint[0], mapPoint[1]);
             } else {
@@ -583,18 +689,52 @@ public class VectorMapView extends View {
         }
     }
 
-    void mapTranslateAndRotateAnimation(final float xMinus,
-                                        final float yMinus,
-                                        final float degMinus, float cerX, float cerY,
-                                        long duration) {
+    public void mapRotateAnimation(final float degMinus, final float cerX, final float cerY, long duration) {
+        if (!isAnimating) {
+            ValueAnimator valueAnimator;
+            if (Float.compare(degMinus, 0f) != 0) {
+                valueAnimator = ValueAnimator.ofFloat(0, degMinus);
+            } else {
+                return;
+            }
+            isAnimating = true;
+            controlDeg += degMinus;
+            tempMatrix.set(mainMatrix);
+            valueAnimator.setDuration(duration);
+            valueAnimator.setInterpolator(new LinearInterpolator());
+            valueAnimator.addListener(animateListener);
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    mainMatrix.postRotate((float) valueAnimator.getAnimatedValue(), cerX, cerY);
+                    invalidate();
+                }
+            });
+            valueAnimator.start();
+        }
+    }
+
+    public void mapTranslateAndRotateAnimation(final float xMinus,
+                                               final float yMinus,
+                                               final float degMinus, float cerX, float cerY,
+                                               long duration) {
+        if (!isAnimating) {
+            isAnimating = true;
+            if (Float.compare(degMinus, 0f) == 0) {
+
+            }
+            ValueAnimator animator;
+        }
         boolean needRotate = false;
     }
 
-    void mapTranslateAnimation(final float xMinus, final float yMinus, long duration) {
-        mapTranslateAndRotateAnimation(xMinus, yMinus, 0f, 0f, 0f, duration);
+    public void mapTranslateAnimation(final float xMinus, final float yMinus, long duration) {
+        if (!isAnimating) {
+
+        }
     }
 
-    void mapScaleAnimation(final float scale, final float cerX, final float cerY, long duration) {
+    public void mapScaleAnimation(final float scale, final float cerX, final float cerY, long duration) {
         if (!isAnimating) {
             isAnimating = true;
             tempMatrix.set(mainMatrix);
@@ -654,7 +794,7 @@ public class VectorMapView extends View {
         mapPoint[1] /= controlScale;
         String id = this.mapSrc.findPointByPos(mapPoint[0], mapPoint[1], clickSensitivity);
         if (id != null && listener != null) {
-            listener.onClickPoint(id);
+            listener.onClickPoint(id, orgX, orgY);
             return true;
         }
         return false;
@@ -796,6 +936,27 @@ public class VectorMapView extends View {
         @Override
         public void onAnimationRepeat(Animator animator) {
             isAnimating = true;
+        }
+    }
+
+    class CompassListener implements SensorEventListener {
+
+        @Override
+        public void onSensorChanged(SensorEvent sensorEvent) {
+            switch (sensorEvent.sensor.getType()) {
+                case Sensor.TYPE_MAGNETIC_FIELD:
+                    mValues = sensorEvent.values;
+                    break;
+                case Sensor.TYPE_ACCELEROMETER:
+                    aValues = sensorEvent.values;
+                    break;
+            }
+            calculateOrientation();
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int i) {
+
         }
     }
 }

@@ -35,6 +35,15 @@
         <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:text="设置当前位置"
+                android:layout_gravity="end"
+                android:id="@+id/currPos"
+                />
+
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:id="@+id/reset"
                 android:text="重置位置"/>
     </FrameLayout>
@@ -65,6 +74,7 @@
                 android:text="终点"
                 android:background="@android:color/darker_gray"
                 />
+
         <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -72,6 +82,7 @@
                 android:text="导航"
                 android:layout_weight="1.25"
                 android:textSize="17sp"/>
+
         <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
