@@ -2,13 +2,17 @@ package com.tyc129.vectormap;
 
 
 import android.graphics.Bitmap;
+import android.support.annotation.NonNull;
+import android.util.ArrayMap;
 import com.tyc129.vectormap.struct.Coordinate;
+import com.tyc129.vectormap.struct.Interest;
 import com.tyc129.vectormap.struct.MapSrc;
 import com.tyc129.vectormap.struct.Point;
 import com.tyc129.vectormap.view.DrawSrc;
 import com.tyc129.vectormap.view.RenderUnit;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -90,12 +94,12 @@ public class VectorMap {
 
     }
 
-    public boolean acquirePositionForMain(String pointId, float[] pos) {
+    public boolean acquirePositionForMain(@NonNull String pointId,@NonNull float[] pos) {
         return acquirePosition(pointId, pos, mainMapSrc);
     }
 
-    public boolean acquirePosition(String pointId, float[] pos, MapSrc mapSrc) {
-        if (mapSrc != null && pos != null && pos.length >= 3 && pointId != null) {
+    public boolean acquirePosition(@NonNull String pointId, @NonNull float[] pos, @NonNull MapSrc mapSrc) {
+        if (pos.length >= 3) {
             List<Point> points = new ArrayList<>();
             points.addAll(mapSrc.getInterests());
             points.addAll(mapSrc.getPoints());
@@ -112,7 +116,7 @@ public class VectorMap {
         return false;
     }
 
-    public MapSrc acquireMap(String id) {
+    public MapSrc acquireMap(@NonNull String id) {
         for (MapSrc e :
                 mapSrcs) {
             if (e.getId().equals(id)) {
@@ -126,7 +130,7 @@ public class VectorMap {
         return mainMapSrc;
     }
 
-    public List<RenderUnit> getRenderMap(String id) {
+    public List<RenderUnit> getRenderMap(@NonNull String id) {
         if (id != null && mapRenderUnits.containsKey(id)) {
             return mapRenderUnits.get(id);
         }
@@ -138,5 +142,28 @@ public class VectorMap {
             return getRenderMap(mainMapSrc.getId());
         }
         return null;
+    }
+
+    public String getInnerId(@NonNull String id, @NonNull MapSrc mapSrc) {
+        String result = null;
+        for (Interest e :
+                mapSrc.getInterests()) {
+            if (e.getId().equals(id)) {
+                result = e.getInnerId();
+                break;
+            }
+        }
+        return result;
+    }
+
+    public Map<MapSrc, List<RenderUnit>> getMaps(@NonNull String id) {
+        Map<MapSrc, List<RenderUnit>> mapSrcListMap = new HashMap<>();
+        for (MapSrc e :
+                mapSrcs) {
+            if (e.getId().contains(id)) {
+                mapSrcListMap.put(e, mapRenderUnits.get(e.getId()));
+            }
+        }
+        return mapSrcListMap;
     }
 }

@@ -103,6 +103,8 @@ public class DrawSrcResolver
             if (style != null) {
                 paint.setStyle(Paint.Style.valueOf(style.toUpperCase()));
             }
+            paint.setAntiAlias(true);
+            paint.setStrokeCap(Paint.Cap.ROUND);
             return paint;
         }
 

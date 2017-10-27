@@ -1,12 +1,12 @@
 package com.tyc129.vectormap.view;
 
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
+import android.graphics.*;
+import android.util.SparseArray;
 import com.tyc129.vectormap.view.RenderUnit;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 渲染器
@@ -25,6 +25,7 @@ public class MapRender {
     private float[] mapPoint;
 
     private List<RenderUnit> currentUnits;
+    private SparseArray<List<RenderUnit>> renderLayers;
     private List<RenderUnit> tempUnits;
 
     public MapRender() {
@@ -72,61 +73,64 @@ public class MapRender {
         canvas.restore();
     }
 
+    private void render(List<RenderUnit> renderUnits, Canvas canvas, Matrix matrix, float rDeg, float scale,
+                        boolean allowPaths, boolean allowPoints, boolean allowTags) {
+        canvas.save();
+        scale = 1 / scale;
+        for (int i = 0; i < renderUnits.size(); i++) {
+            RenderUnit e = renderUnits.get(i);
+            switch (e.getRenderBody()) {
+                case POINT: {
+                    if (allowPoints) {
+                        tempMatrix.set(matrix);
+                        cerX = e.getPoint().x;
+                        cerY = e.getPoint().y;
+                        mapPoint[0] = cerX;
+                        mapPoint[1] = cerY;
+                        matrix.mapPoints(mapPoint);
+                        tempMatrix.postRotate(-rDeg, mapPoint[0], mapPoint[1]);
+                        tempMatrix.postScale(scale, scale, mapPoint[0], mapPoint[1]);
+                        canvas.setMatrix(tempMatrix);
+                        if (e.getBitmap() != null)
+                            canvas.drawBitmap(e.getBitmap(),
+                                    cerX - e.getHalfBitmapWidth(), cerY - e.getHalfBitmapHeight(), null);
+                    }
+                    break;
+                }
+                case TAG: {
+                    if (allowTags) {
+                        tempMatrix.set(matrix);
+                        cerX = e.getPoint().x;
+                        cerY = e.getPoint().y;
+                        mapPoint[0] = cerX;
+                        mapPoint[1] = cerY;
+                        matrix.mapPoints(mapPoint);
+                        tempMatrix.postRotate(-rDeg, mapPoint[0], mapPoint[1]);
+                        tempMatrix.postScale(scale, scale, mapPoint[0], mapPoint[1]);
+                        canvas.setMatrix(tempMatrix);
+                        canvas.drawText(e.getTagText(),
+                                cerX, cerY + e.getTextMargin(),
+                                e.getPaint());
+                    }
+                    break;
+                }
+                case PATH: {
+                    if (allowPaths) {
+                        canvas.drawPath(e.getPath(), e.getPaint());
+                    }
+                    break;
+                }
+            }
+        }
+        canvas.restore();
+    }
+
     void render2Canvas(Canvas canvas, Matrix matrix, float rDeg, float scale,
                        boolean allowPaths, boolean allowPoints, boolean allowTags) {
         if (canvas != null && currentUnits != null) {
-            canvas.save();
-            scale = 1 / scale;
-            for (RenderUnit e :
-                    currentUnits) {
-                switch (e.getRenderBody()) {
-                    case POINT: {
-                        if (allowPoints) {
-                            tempMatrix.set(matrix);
-                            cerX = e.getPoint().x;
-                            cerY = e.getPoint().y;
-                            mapPoint[0] = cerX;
-                            mapPoint[1] = cerY;
-                            matrix.mapPoints(mapPoint);
-                            tempMatrix.postRotate(-rDeg, mapPoint[0], mapPoint[1]);
-                            tempMatrix.postScale(scale, scale, mapPoint[0], mapPoint[1]);
-                            canvas.setMatrix(tempMatrix);
-                            canvas.drawBitmap(e.getBitmap(),
-                                    cerX - e.getHalfBitmapWidth(), cerY - e.getHalfBitmapHeight(), null);
-                        }
-                        break;
-                    }
-                    case TAG: {
-                        if (allowTags) {
-                            tempMatrix.set(matrix);
-                            cerX = e.getPoint().x;
-                            cerY = e.getPoint().y;
-                            mapPoint[0] = cerX;
-                            mapPoint[1] = cerY;
-                            matrix.mapPoints(mapPoint);
-                            tempMatrix.postRotate(-rDeg, mapPoint[0], mapPoint[1]);
-                            tempMatrix.postScale(scale, scale, mapPoint[0], mapPoint[1]);
-                            canvas.setMatrix(tempMatrix);
-                            canvas.drawText(e.getTagText(),
-                                    cerX, cerY + e.getTextMargin(),
-                                    e.getPaint());
-                        }
-                        break;
-                    }
-                    case PATH: {
-                        if (allowPaths) {
-                            canvas.drawPath(e.getPath(), e.getPaint());
-                        }
-                        break;
-                    }
-                }
-            }
-            canvas.restore();
+            render(currentUnits, canvas, matrix, rDeg, scale, allowPaths, allowPoints, allowTags);
             if (!tempUnits.isEmpty()) {
-                for (RenderUnit e :
-                        tempUnits) {
-                    canvas.drawPath(e.getPath(), e.getPaint());
-                }
+                render(tempUnits, canvas, matrix, rDeg, scale, allowPaths, allowPoints, allowTags);
             }
         }
     }

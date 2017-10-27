@@ -42,6 +42,7 @@ public class MapFactory {
         void buildSuccess(VectorMap vectorMap);
     }
 
+    public static final String LOG_TAG = "MapFactory";
     private Context context;
     private boolean isAsync;
     private List<InputStream> mapStreams;
@@ -353,7 +354,7 @@ public class MapFactory {
                     return error;
                 }
             } catch (Exception e) {
-                Log.e("MapFactory", e.getMessage(), e);
+                Log.e(LOG_TAG, e.getMessage(), e);
                 return e.getMessage();
             }
         }

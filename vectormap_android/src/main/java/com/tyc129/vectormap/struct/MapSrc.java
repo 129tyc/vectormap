@@ -22,6 +22,7 @@ public class MapSrc {
     }
 
     private String id;
+    private String name;
     private float width;
     private float height;
     private MetricUnit unit;
@@ -112,6 +113,14 @@ public class MapSrc {
             }
         }
         return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getId() {

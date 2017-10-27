@@ -17,8 +17,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 25
-        versionCode 1
-        versionName "1.0"
+        versionCode 10
+        versionName "2.5"
 
         testInstrumentationRunner "android.support.paint.runner.AndroidJUnitRunner"
 

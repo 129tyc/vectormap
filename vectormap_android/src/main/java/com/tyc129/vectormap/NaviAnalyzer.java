@@ -1,5 +1,6 @@
 package com.tyc129.vectormap;
 
+import android.support.v4.util.LruCache;
 import android.util.Log;
 import com.tyc129.vectormap.struct.*;
 
@@ -27,6 +28,7 @@ public class NaviAnalyzer {
     private static final String LOG_TAG = "NaviAnalyzer";
     private MapSrc mapSrc;
     private List<NaviUnit> units;
+    //private Map<MapSrc, List<NaviUnit>> naviUnitsMap;
     private Queue<SearchNode> queue;
 
     public NaviAnalyzer() {
@@ -115,6 +117,8 @@ public class NaviAnalyzer {
             queue.clear();
             int sPos = searchPointInUnits(sId);
             int ePos = searchPointInUnits(eId);
+            if (sPos < 0 || ePos < 0)
+                return null;
             SearchNode node = new SearchNode(units.size());
             node.posList.add(sPos);
             node.traverseList[sPos] = true;
@@ -132,7 +136,11 @@ public class NaviAnalyzer {
                             temp.destroy();
                         }
                     } else {
-                        pushNode(temp, type);
+                        if (minCost != null && minCost.cost < temp.cost) {
+                            temp.destroy();
+                        } else {
+                            pushNode(temp, type);
+                        }
                     }
                 }
             } catch (CloneNotSupportedException e) {

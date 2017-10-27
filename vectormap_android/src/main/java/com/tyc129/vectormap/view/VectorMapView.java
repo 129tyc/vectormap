@@ -1,13 +1,11 @@
 package com.tyc129.vectormap.view;
 
 import android.animation.Animator;
+import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.graphics.RectF;
+import android.graphics.*;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -19,7 +17,6 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
 import com.tyc129.vectormap.struct.MapSrc;
 import com.tyc129.vectormap_android.R;
 
@@ -35,7 +32,7 @@ public class VectorMapView extends View {
     /**
      * 地图目标点击监听器接口
      */
-    public interface OnClickPointListener {
+    public interface OnMapActionOccurListener {
         /**
          * 当地图目标被点击时触发函数
          *
@@ -44,6 +41,20 @@ public class VectorMapView extends View {
          * @param touchY 触摸点Y轴位置
          */
         void onClickPoint(String id, float touchX, float touchY);
+
+        void onClickMap(float touchX, float touchY);
+
+        void onDoubleTapMap();
+
+        void onTranslateMap(float dx, float dy);
+
+        void onRotateMap(float deg, float rx, float ry);
+
+        void onScaleMap(float scale, float sx, float sy);
+
+        void onTransformStart();
+
+        void onTransformEnd();
     }
 
     public enum CompassStyle {
@@ -82,8 +93,15 @@ public class VectorMapView extends View {
     /**
      * 默认点击敏感度
      */
-    private static final float CLICK_SENSITIVITY_DEFAULT = 20;
-    private boolean isAnimating;
+    private static final float CLICK_SENSITIVITY_DEFAULT = 36;
+    /**
+     * 默认地图填充类型
+     */
+    private static final int MAP_FILL_TYPE_DEFAULT = 0;
+    /**
+     * 是否处于动画中
+     */
+    private boolean isTransforming;
     /**
      * 允许地图旋转
      */
@@ -95,7 +113,7 @@ public class VectorMapView extends View {
     /**
      * 是否显示标签
      */
-    private boolean showTags;
+    private boolean allowShowTags;
     /**
      * 允许地图缩放
      */
@@ -162,12 +180,20 @@ public class VectorMapView extends View {
      */
     private float halfHeight;
     /**
-     * 地图的最大放比例
+     * 地图的实际最大缩放比例
+     */
+    private float maxScaleActually;
+    /**
+     * 地图的最大缩放比例
      */
     private float maxScale;
     /**
-     * 地图的最小缩放比例
+     * 地图的实际最小缩放比例
      * 不得小于重缩放时按地图填充属性缩放的比例
+     */
+    private float minScaleActually;
+    /**
+     * 地图的最小缩放比例
      */
     private float minScale;
     /**
@@ -227,7 +253,7 @@ public class VectorMapView extends View {
     /**
      * 地图目标点击监听器，负责回调
      */
-    private OnClickPointListener listener;
+    private OnMapActionOccurListener listener;
     /**
      * 临时Canvas,用于向临时Bitmap绘制地图资源
      */
@@ -252,6 +278,15 @@ public class VectorMapView extends View {
     private CompassStyle compassStyle;
     private boolean isIndicating;
     private int currentDirection;
+    //private Paint backPaint;
+    private ValueAnimator tfAnimator;
+
+    private boolean isSelecting;
+    private Bitmap placeHolder;
+    private float currSelectX;
+    private float currSelectY;
+    private float holderPaintOffsetX;
+    private float holderPaintOffsetY;
 
     @IntDef({
             FILL_TYPE_DEF,
@@ -271,8 +306,32 @@ public class VectorMapView extends View {
 
     public VectorMapView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        Log.i(LOG_TAG, "initialize!");
         initView(context, attrs);
+        Log.v(LOG_TAG, "map view initialized!");
+    }
+
+    public void setPlaceHolder(Bitmap placeHolder) {
+        this.placeHolder = placeHolder;
+        if (this.placeHolder != null) {
+            holderPaintOffsetX = placeHolder.getWidth() >> 1;
+            holderPaintOffsetY = placeHolder.getHeight();
+        }
+    }
+
+    public void selectPosition(float x, float y) {
+        if (isSelecting)
+            cancelSelection();
+        if (placeHolder == null || x < 0 || y < 0)
+            return;
+        isSelecting = true;
+        currSelectX = x;
+        currSelectY = y;
+        invalidate();
+    }
+
+    public void cancelSelection() {
+        isSelecting = false;
+        invalidate();
     }
 
     public void setDirectionNarrow(Bitmap currentNarrow) {
@@ -291,7 +350,8 @@ public class VectorMapView extends View {
             mapPoint[0] = cerX;
             mapPoint[1] = cerY;
             mainMatrix.mapPoints(mapPoint);
-            if (mapBox.contains(mapPoint[0], mapPoint[1])) {
+            mainMatrix.mapRect(tmpRectF, mapBox);
+            if (tmpRectF.contains(mapPoint[0], mapPoint[1])) {
                 this.compassStyle = compassStyle;
                 isIndicating = true;
                 narrowPosX = cerX;
@@ -316,7 +376,7 @@ public class VectorMapView extends View {
         float[] r = new float[9];
         SensorManager.getRotationMatrix(r, null, aValues, mValues);
         SensorManager.getOrientation(r, oValues);
-        int nextDeg = Math.round((float) -Math.toDegrees(oValues[0]));
+        int nextDeg = Math.round((float) Math.toDegrees(oValues[0]));
         if ((nextDeg ^ currentDirection) < 0) {
             nextDeg = nextDeg < 0 ? 360 + nextDeg : 360 - nextDeg;
         }
@@ -334,8 +394,11 @@ public class VectorMapView extends View {
      *
      * @param listener 需加载的监听器
      */
-    public void setOnClickPointListener(OnClickPointListener listener) {
+    public void setOnMapActionOccurListener(OnMapActionOccurListener listener) {
+        Log.v(LOG_TAG, "map view set listener");
         this.listener = listener;
+        if (gestureParser != null)
+            gestureParser.setListener(listener);
     }
 
     public void setMapRender(MapRender mapRender) {
@@ -353,6 +416,11 @@ public class VectorMapView extends View {
             this.mapSrc = mapSrc;
         } else
             throw new NullPointerException("VectorMap is NULL!");
+        Log.v(LOG_TAG, "set map recourse");
+        if (isTransforming && tfAnimator != null && tfAnimator.isRunning()) {
+            tfAnimator.cancel();
+        }
+        initVariables();
         this.mapWidth = (int) this.mapSrc.getWidth();
         this.mapHeight = (int) this.mapSrc.getHeight();
         if (this.mapSrc.getUnit() == MapSrc.MetricUnit.DP) {
@@ -363,8 +431,6 @@ public class VectorMapView extends View {
         if (viewPortHeight > 0 && viewPortWidth > 0) {
             rescaleMatrix(viewPortWidth, viewPortHeight);
         }
-//        initVariables();
-        // TODO: 2017/5/1 0001 检查是否可能在加载其他地图时发生混乱
     }
 
     /**
@@ -392,6 +458,7 @@ public class VectorMapView extends View {
         halfHeight = 0f;
         mapPoint = new float[2];
         isIndicating = false;
+        //backPaint = new Paint();
         if (this.context != null && !isInEditMode()) {
             manager = (SensorManager) this.context.getSystemService(Context.SENSOR_SERVICE);
             if (manager != null) {
@@ -411,10 +478,13 @@ public class VectorMapView extends View {
      * 初始化特殊变量
      */
     private void initVariables() {
+        minScaleActually = minScale;
+        maxScaleActually = maxScale;
         controlDeg = 0f;
         controlScale = 1f;
         mainMatrix = new Matrix();
-        isAnimating = false;
+        isTransforming = false;
+        tfAnimator = null;
     }
 
     /**
@@ -424,15 +494,16 @@ public class VectorMapView extends View {
      * @param attrs   属性集
      */
     private void getAttributes(Context context, AttributeSet attrs) {
+        Log.v(LOG_TAG, "set attributes");
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.VectorMapView);
         try {
-            showTags = typedArray.getBoolean(R.styleable.VectorMapView_showTags, false);
+            allowShowTags = typedArray.getBoolean(R.styleable.VectorMapView_showTags, false);
             allowTranslate = typedArray.getBoolean(R.styleable.VectorMapView_allowTranslate, false);
             allowScale = typedArray.getBoolean(R.styleable.VectorMapView_allowScale, false);
             allowClick = typedArray.getBoolean(R.styleable.VectorMapView_allowClick, false);
             allowRotate = typedArray.getBoolean(R.styleable.VectorMapView_allowRotate, false);
             allowBreakBoundary = typedArray.getBoolean(R.styleable.VectorMapView_allowBreakBoundary, false);
-            mapFillType = Integer.parseInt(typedArray.getString(R.styleable.VectorMapView_mapFillType));
+            mapFillType = typedArray.getInt(R.styleable.VectorMapView_mapFillType, MAP_FILL_TYPE_DEFAULT);
             maxScale = typedArray.getFloat(R.styleable.VectorMapView_maxScale, MAX_SCALE_DEFAULT);
             minScale = typedArray.getFloat(R.styleable.VectorMapView_minScale, MIN_SCALE_DEFAULT);
             scaleOneTap = typedArray.getFloat(R.styleable.VectorMapView_scaleOneTap, SCALE_ONETAP_DEFAULT);
@@ -440,9 +511,14 @@ public class VectorMapView extends View {
             originalX = typedArray.getFloat(R.styleable.VectorMapView_originalPositionX, 0f);
             originalY = typedArray.getFloat(R.styleable.VectorMapView_originalPositionY, 0f);
             originalDeg = typedArray.getFloat(R.styleable.VectorMapView_originalRotate, 0f);
+            maxScaleActually = maxScale;
+            minScaleActually = minScale;
+
             controlDeg += originalDeg;
+
             mapRotate(originalDeg, originalX, originalY);
             mapTranslate(originalX, originalY);
+
         } finally {
             if (typedArray != null) {
                 typedArray.recycle();
@@ -452,6 +528,7 @@ public class VectorMapView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+
         gestureDetector.onTouchEvent(event);
         return true;
     }
@@ -459,21 +536,27 @@ public class VectorMapView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (mapSrc != null) {
+        if (mapRender != null) {
             tempBitmap.eraseColor(0);
-            tempCanvas.save();
+            //tempCanvas.save();
             tempCanvas.setMatrix(mainMatrix);
-            if (isAnimating) {
+            if (isTransforming) {
                 mapRender.render2CanvasWithoutTags(tempCanvas, mainMatrix, controlDeg, controlScale);
             } else {
                 mapRender.renderAll2Canvas(tempCanvas, mainMatrix, controlDeg, controlScale);
                 if (isIndicating && this.compassStyle == CompassStyle.INDEPENDENCE) {
                     mapRender.renderBitmap2Canvas(tempCanvas, mainMatrix, currentNarrow,
-                            currentDirection, controlDeg + 90, narrowPosX, narrowPosY,
+                            currentDirection, controlDeg + 45, narrowPosX, narrowPosY,
                             controlScale, narrowHWidth, narrowHHeight);
                 }
+                if (isSelecting) {
+                    mapRender.renderBitmap2Canvas(tempCanvas, mainMatrix, placeHolder,
+                            0, controlDeg, currSelectX, currSelectY, controlScale,
+                            holderPaintOffsetX, holderPaintOffsetY);
+                }
             }
-            tempCanvas.restore();
+            //tempCanvas.restore();
+            //canvas.drawBitmap(tempBitmap, 0, 0, backPaint);
             canvas.drawBitmap(tempBitmap, 0, 0, null);
         }
     }
@@ -559,34 +642,35 @@ public class VectorMapView extends View {
      * @param height 显示的View高度
      */
     private void rescaleMatrix(int width, int height) {
+        Log.v(LOG_TAG, "rescale map--->" +
+                width + "," + height);
         float scaleX = width * (1.0f) / mapWidth;
         float scaleY = height * (1.0f) / mapHeight;
-//        float centreX = originalX;
-//        float centerY = originalY;
+        float tempScale = controlScale;
         switch (mapFillType) {
             case FILL_TYPE_MAX: {
                 controlScale = Math.max(scaleX, scaleY);
-                if (minScale < controlScale) {
-                    minScale = controlScale;
+                if (minScaleActually < controlScale) {
+                    minScaleActually = controlScale;
                 }
                 break;
             }
             case FILL_TYPE_MIN: {
                 controlScale = Math.min(scaleX, scaleY);
-                if (minScale < controlScale) {
-                    minScale = controlScale;
+                if (minScaleActually < controlScale) {
+                    minScaleActually = controlScale;
                 }
                 break;
             }
             case FILL_TYPE_DEF: {
                 controlScale = Math.min(scaleX, scaleY);
-                controlScale += maxScale;
+                controlScale += maxScaleActually;
                 controlScale /= 2;
-                minScale = Math.max(scaleX, scaleY);
+                minScaleActually = Math.max(scaleX, scaleY);
                 break;
             }
         }
-        mainMatrix.postScale(controlScale, controlScale, originalX, originalY);
+        mainMatrix.postScale(controlScale / tempScale, controlScale / tempScale, originalX, originalY);
     }
 
     /**
@@ -606,19 +690,13 @@ public class VectorMapView extends View {
      */
     public void mapTranslate(float tx, float ty) {
         if (allowTranslate) {
+            if (listener != null)
+                listener.onTranslateMap(tx, ty);
             if (allowBreakBoundary) {
                 mainMatrix.postTranslate(tx, ty);
             } else {
                 checkBoundaryTranslate(mainMatrix, tx, ty);
             }
-            invalidate();
-        }
-    }
-
-    public void mapRotate_Raw(float rDeg, float cerX, float cerY) {
-        if (allowRotate) {
-            controlDeg += rDeg;
-            mainMatrix.postRotate(rDeg, cerX, cerY);
             invalidate();
         }
     }
@@ -634,10 +712,11 @@ public class VectorMapView extends View {
     public void mapRotate(float rDeg, float cerX, float cerY) {
         if (allowRotate) {
             // TODO: 2017/5/1 0001 需要添加边界检测函数
+            if (listener != null)
+                listener.onRotateMap(rDeg, cerX, cerY);
             mapPoint[0] = cerX;
             mapPoint[1] = cerY;
             controlDeg += rDeg;
-            //mainMatrix.mapPoints(mapPoint);
             mainMatrix.postRotate(rDeg, mapPoint[0], mapPoint[1]);
             invalidate();
         }
@@ -675,11 +754,12 @@ public class VectorMapView extends View {
      */
     public void mapScale(float scale, float cerX, float cerY) {
         if (allowScale &&
-                controlScale * scale < maxScale && controlScale * scale > minScale) {
+                controlScale * scale < maxScaleActually && controlScale * scale > minScaleActually) {
+            if (listener != null)
+                listener.onScaleMap(scale, cerX, cerY);
             controlScale *= scale;
             mapPoint[0] = cerX;
             mapPoint[1] = cerY;
-            //mainMatrix.mapPoints(mapPoint);
             if (allowBreakBoundary || scale > 1) {
                 mainMatrix.postScale(scale, scale, mapPoint[0], mapPoint[1]);
             } else {
@@ -689,76 +769,66 @@ public class VectorMapView extends View {
         }
     }
 
-    public void mapRotateAnimation(final float degMinus, final float cerX, final float cerY, long duration) {
-        if (!isAnimating) {
-            ValueAnimator valueAnimator;
-            if (Float.compare(degMinus, 0f) != 0) {
-                valueAnimator = ValueAnimator.ofFloat(0, degMinus);
-            } else {
-                return;
-            }
-            isAnimating = true;
-            controlDeg += degMinus;
+    public void transformAnimation(float xMinus, float yMinus,
+                                   float scale, final float sCerX, final float sCerY,
+                                   float rotate, final float rCerX, final float rCerY,
+                                   long duration) {
+        if (!isTransforming && allowTranslate && allowScale && allowRotate &&
+                !(rotate == 0 && scale == 1 && xMinus == 0 && yMinus == 0)) {
+            final float tempDeg = controlDeg;
+            final float tempScale = controlScale;
+            isTransforming = true;
             tempMatrix.set(mainMatrix);
-            valueAnimator.setDuration(duration);
-            valueAnimator.setInterpolator(new LinearInterpolator());
-            valueAnimator.addListener(animateListener);
-            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            if (controlScale * scale > maxScaleActually) {
+                scale = maxScaleActually / controlScale;
+            } else if (controlScale * scale < minScaleActually) {
+                scale = minScaleActually / controlScale;
+            }
+            if (rotate > 180) {
+                rotate -= 360;
+            } else if (rotate < -180)
+                rotate += 360;
+            //controlDeg += rotate;
+            //controlScale *= scale;
+            tfAnimator = ValueAnimator.ofObject(new TransformEvaluator(),
+                    new TransformF().set(0f, 0f, 1f, 0f),
+                    new TransformF().set(xMinus, yMinus, scale, rotate));
+            tfAnimator.setDuration(duration);
+            tfAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+            tfAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    mainMatrix.postRotate((float) valueAnimator.getAnimatedValue(), cerX, cerY);
+                    controlDeg = tempDeg;
+                    controlScale = tempScale;
+                    mainMatrix.set(tempMatrix);
+                    TransformF f = (TransformF) valueAnimator.getAnimatedValue();
+                    controlDeg += f.rotateDeg;
+                    controlScale *= f.scale;
+                    mainMatrix.postTranslate(f.x, f.y);
+                    mainMatrix.postScale(f.scale, f.scale, sCerX, sCerY);
+                    mainMatrix.postRotate(f.rotateDeg, rCerX, rCerY);
                     invalidate();
                 }
             });
-            valueAnimator.start();
+            tfAnimator.addListener(animateListener);
+            tfAnimator.start();
+        } else {
+            if (tfAnimator != null && tfAnimator.isRunning()) {
+                tfAnimator.cancel();
+            }
         }
     }
 
-    public void mapTranslateAndRotateAnimation(final float xMinus,
-                                               final float yMinus,
-                                               final float degMinus, float cerX, float cerY,
-                                               long duration) {
-        if (!isAnimating) {
-            isAnimating = true;
-            if (Float.compare(degMinus, 0f) == 0) {
-
-            }
-            ValueAnimator animator;
-        }
-        boolean needRotate = false;
+    public void mapRotateAnimation(final float degMinus, final float cerX, final float cerY, long duration) {
+        transformAnimation(0, 0, 1, 0, 0, degMinus, cerX, cerY, duration);
     }
 
     public void mapTranslateAnimation(final float xMinus, final float yMinus, long duration) {
-        if (!isAnimating) {
-
-        }
+        transformAnimation(xMinus, yMinus, 1, 0, 0, 0, 0, 0, duration);
     }
 
     public void mapScaleAnimation(final float scale, final float cerX, final float cerY, long duration) {
-        if (!isAnimating) {
-            isAnimating = true;
-            tempMatrix.set(mainMatrix);
-            controlScale *= scale;
-            ValueAnimator animator;
-            if (scale > 1) {
-                animator = ValueAnimator.ofFloat(1, scale);
-            } else {
-                animator = ValueAnimator.ofFloat(scale, 1);
-            }
-            animator.setDuration(duration);
-            animator.setInterpolator(new AccelerateDecelerateInterpolator());
-            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    float value = (float) valueAnimator.getAnimatedValue();
-                    mainMatrix.set(tempMatrix);
-                    mainMatrix.postScale(value, value, cerX, cerY);
-                    invalidate();
-                }
-            });
-            animator.addListener(animateListener);
-            animator.start();
-        }
+        transformAnimation(0, 0, scale, cerX, cerY, 0, 0, 0, duration);
     }
 
     /**
@@ -768,7 +838,7 @@ public class VectorMapView extends View {
      */
     public void mapReset() {
         mainMatrix.reset();
-        controlScale = minScale;
+        controlScale = 1;
         controlDeg = 0f;
         rescaleMatrix(viewPortWidth, viewPortHeight);
         invalidate();
@@ -801,77 +871,57 @@ public class VectorMapView extends View {
     }
 
     /**
-     * 通过id设置地图显示位置
-     * <b>不进行相对旋转</b>
+     * 将地图的某点定位到屏幕中央并放大到相应比例
+     * <b>自带动画</b>
      *
-     * @param id 点或路径id
-     * @return 是否定位成功
+     * @param x     地图上点的X轴位置
+     * @param y     地图上点的Y轴位置
+     * @param scale 缩放比例
      */
-    public boolean setViewById(String id) {
-        return setViewById(id, 0f);
+    public void locateToCenter(float x, float y, float scale, float deg, long duration) {
+        locateTo(x, y, halfWidth, halfHeight, scale, deg, duration);
     }
 
     /**
-     * 通过id和旋转角设置地图显示位置
+     * 将地图的某点定位到屏幕某位置并放大到相应比例
+     * <b>自带动画</b>
      *
-     * @param id     点或路径id
-     * @param rotate 地图旋转角（相对）
-     * @return 是否定位成功
+     * @param x     地图上点的X轴位置
+     * @param y     地图上点的Y轴位置
+     * @param sx    屏幕上点的X轴位置
+     * @param sy    屏幕上点的Y轴位置
+     * @param scale 缩放比例
      */
-    public boolean setViewById(String id, float rotate) {
-
-        return true;
-    }
-
-    /**
-     * 通过地图点的位置坐标设置地图
-     * <b>不进行相对旋转</b>
-     *
-     * @param vx 地图点的x轴坐标点
-     * @param vy 地图点的y轴坐标点
-     * @return 是否定位成功
-     */
-    public boolean setViewByPos(float vx, float vy) {
-        return setViewByPos(vx, vy, 0f);
-    }
-
-    /**
-     * 通过地图点的位置坐标及旋转角设置地图
-     *
-     * @param vx     地图点的x轴坐标点
-     * @param vy     地图点的y轴坐标点
-     * @param rotate 旋转角（相对）
-     * @return 是否定位成功
-     */
-    public boolean setViewByPos(float vx, float vy, float rotate) {
-        mapPoint[0] = vx;
-        mapPoint[1] = vy;
+    public void locateTo(float x, float y,
+                         float sx, float sy, float scale, float deg, long duration) {
+        float ms = scale / controlScale;
+        float mr = deg - controlDeg;
+        mapPoint[0] = x;
+        mapPoint[1] = y;
         mainMatrix.mapPoints(mapPoint);
-        vx = mapPoint[0];
-        vy = mapPoint[1];
-        mapPoint[0] = halfWidth;
-        mapPoint[1] = halfHeight;
-        mainMatrix.mapPoints(mapPoint);
-        float xMinus = vx - mapPoint[0];
-        float yMinus = vy - mapPoint[1];
-
-        return true;
+        float mx = sx - mapPoint[0];
+        float my = sy - mapPoint[1];
+        transformAnimation(mx, my, ms, sx, sy, mr, sx, sy, duration);
     }
 
     void setMapFillType(@MapFillType int mapFillType) {
         this.mapFillType = mapFillType;
     }
 
-    public float getMinScale() {
-        return minScale;
+    public float getMinScaleActually() {
+        return minScaleActually;
     }
 
-    public float getMaxScale() {
-        return maxScale;
+    public float getCurrRotation() {
+        return controlDeg;
     }
 
-    public void setMaxScale(float maxScale) {
-        this.maxScale = maxScale;
+    public float getMaxScaleActually() {
+        return maxScaleActually;
+    }
+
+    public void setMaxScaleActually(float maxScaleActually) {
+        this.maxScaleActually = maxScaleActually;
     }
 
     public boolean isAllowRotate() {
@@ -914,32 +964,133 @@ public class VectorMapView extends View {
         this.scaleOneTap = scaleOneTap;
     }
 
-    class MapAnimateListener implements Animator.AnimatorListener {
+    private class MapAnimateListener implements Animator.AnimatorListener {
 
         @Override
         public void onAnimationStart(Animator animator) {
-            isAnimating = true;
+            if (listener != null)
+                listener.onTransformStart();
+            isTransforming = true;
         }
 
         @Override
         public void onAnimationEnd(Animator animator) {
-            isAnimating = false;
+            if (listener != null)
+                listener.onTransformEnd();
+            isTransforming = false;
             invalidate();
         }
 
         @Override
         public void onAnimationCancel(Animator animator) {
-            isAnimating = false;
+            if (listener != null)
+                listener.onTransformEnd();
+            isTransforming = false;
             invalidate();
         }
 
         @Override
         public void onAnimationRepeat(Animator animator) {
-            isAnimating = true;
+            if (listener != null)
+                listener.onTransformStart();
+            isTransforming = true;
         }
     }
 
-    class CompassListener implements SensorEventListener {
+    private class TransformF {
+        private float x;
+        private float y;
+        private float scale;
+        private float rotateDeg;
+
+        TransformF() {
+        }
+
+        TransformF set(TransformF transformF) {
+            setX(transformF.x);
+            setY(transformF.y);
+            setScale(transformF.scale);
+            setRotateDeg(transformF.rotateDeg);
+            return this;
+        }
+
+        public float getRotateDeg() {
+            return rotateDeg;
+        }
+
+        TransformF setRotateDeg(float rotateDeg) {
+            this.rotateDeg = rotateDeg;
+            return this;
+        }
+
+        TransformF set(float x, float y) {
+            setX(x);
+            setY(y);
+            return this;
+        }
+
+        TransformF set(float x, float y, float scale) {
+            setX(x);
+            setY(y);
+            setScale(scale);
+            return this;
+        }
+
+        TransformF set(float x, float y, float scale, float rotateDeg) {
+            setX(x);
+            setY(y);
+            setScale(scale);
+            setRotateDeg(rotateDeg);
+            return this;
+        }
+
+        float getX() {
+            return x;
+        }
+
+        TransformF setX(float x) {
+            this.x = x;
+            return this;
+        }
+
+        float getY() {
+            return y;
+        }
+
+        TransformF setY(float y) {
+            this.y = y;
+            return this;
+        }
+
+        float getScale() {
+            return scale;
+        }
+
+        TransformF setScale(float scale) {
+            this.scale = scale;
+            return this;
+        }
+    }
+
+    private class TransformEvaluator implements TypeEvaluator<TransformF> {
+        TransformF f = new TransformF();
+
+        @Override
+        public TransformF evaluate(float v, TransformF transformF, TransformF t1) {
+            float x = transformF.x;
+            float x1 = t1.x;
+            float y = transformF.y;
+            float y1 = t1.y;
+            float s = transformF.scale;
+            float s1 = t1.scale;
+            float r = transformF.rotateDeg;
+            float r1 = t1.rotateDeg;
+            f.set(x + (x1 - x) * v, y + (y1 - y) * v, s + (s1 - s) * v, r + (r1 - r) * v);
+            return f;
+        }
+    }
+
+    private class CompassListener implements SensorEventListener {
 
         @Override
         public void onSensorChanged(SensorEvent sensorEvent) {

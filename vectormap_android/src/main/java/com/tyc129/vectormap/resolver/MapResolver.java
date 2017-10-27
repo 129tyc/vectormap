@@ -1,5 +1,6 @@
 package com.tyc129.vectormap.resolver;
 
+import android.util.Log;
 import com.tyc129.vectormap.struct.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
@@ -244,10 +245,12 @@ public class MapResolver
                         float width = Float.parseFloat(attributes.getValue("width"));
                         float height = Float.parseFloat(attributes.getValue("height"));
                         String unit = attributes.getValue("unit");
+                        String name = attributes.getValue("name");
                         mapSrc.setId(id);
                         mapSrc.setWidth(width);
                         mapSrc.setHeight(height);
                         mapSrc.setUnit(MapSrc.MetricUnit.valueOf(unit.toUpperCase()));
+                        mapSrc.setName(name);
                         if (coordinate != null) {
                             currentCoor = coordinate;
                         }

@@ -29,7 +29,7 @@
                 app:allowBreakBoundary="true"
                 app:maxScale="5"
                 app:scaleOneTap="1.25"
-                android:background="@android:color/white"
+                android:background="?attr/colorButtonNormal"
                 android:layout_gravity="bottom"/>
 
         <Button
@@ -46,6 +46,13 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/reset"
                 android:text="重置位置"/>
+
+        <ListView
+                android:layout_gravity="center_vertical|center_horizontal|end"
+                android:id="@+id/inner"
+                android:layout_width="32dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"/>
     </FrameLayout>
 
     <LinearLayout

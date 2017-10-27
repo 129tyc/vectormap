@@ -69,12 +69,13 @@ public class RenderTranslator {
 
     public List<RenderUnit> translatePaths(List<Path> paths) {
         List<RenderUnit> units = new ArrayList<>();
+        List<String> attributes = new ArrayList<>();
         for (Path e :
                 paths) {
             RenderUnit unit = new RenderUnit();
             if (e instanceof Road) {
                 Road temp = (Road) e;
-                List<String> attributes = new ArrayList<>();
+                attributes.clear();
                 if (temp.getPassLevel() != null) {
                     attributes.add(temp.getPassLevel().toString());
                 }
@@ -118,8 +119,13 @@ public class RenderTranslator {
                                 attributesCache.get(i).attributes.contains(temp.getPathAttribute().toString())) {
                             break;
                         }
+
                     }
                     drawSrc = drawSrcList.get(i);
+                    Paint p = drawSrc.getPaint();
+                    p.setStrokeCap(Paint.Cap.BUTT);
+                    p.setPathEffect(new DashPathEffect(new float[]{16, 8}, 0));
+                    drawSrc.setPaint(p);
                 } else {
                     for (DrawSrc drawE :
                             drawSrcList) {
@@ -166,6 +172,9 @@ public class RenderTranslator {
                     }
                 }
                 unit.setRenderBody(RenderUnit.RenderBody.POINT);
+                if (i == 9) {
+                    Log.e(LOG_TAG, attributes.toString());
+                }
                 DrawSrc drawSrc = drawSrcList.get(i);
                 switch (drawSrc.getPaintType()) {
                     case BITMAP:
@@ -208,24 +217,19 @@ public class RenderTranslator {
                 break;
             }
         }
-        for (Map.Entry<String, String> tag :
-                tagsMap.entrySet()) {
-            RenderUnit unit = new RenderUnit();
-            unit.setPaint(paint);
-            unit.setRenderBody(RenderUnit.RenderBody.TAG);
-            unit.setRenderType(RenderUnit.RenderType.PAINT);
-            unit.setTagText(tag.getValue());
-            unit.setTextMargin(margin);
-            String id = tag.getKey();
-            for (Point e :
-                    points) {
-                if (e.getId().equals(id)) {
-                    unit.setPoint(new PointF(e.getRootPosX(), e.getRootPosY()));
-                    unit.setFloor(e.getRootPosZ());
-                    break;
-                }
+        for (Point e :
+                points) {
+            if (tagsMap.containsKey(e.getId())) {
+                RenderUnit unit = new RenderUnit();
+                unit.setPaint(paint);
+                unit.setRenderBody(RenderUnit.RenderBody.TAG);
+                unit.setRenderType(RenderUnit.RenderType.PAINT);
+                unit.setTagText(tagsMap.get(e.getId()));
+                unit.setTextMargin(margin);
+                unit.setPoint(new PointF(e.getRootPosX(), e.getRootPosY()));
+                unit.setFloor(e.getRootPosZ());
+                units.add(unit);
             }
-            units.add(unit);
         }
         return units;
     }

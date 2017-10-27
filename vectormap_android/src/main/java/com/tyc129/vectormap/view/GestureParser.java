@@ -2,7 +2,6 @@ package com.tyc129.vectormap.view;
 
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import com.tyc129.vectormap.utils.MathUtils;
 
 import static com.tyc129.vectormap.utils.MathUtils.getDecimal;
 import static com.tyc129.vectormap.utils.MathUtils.getDistance;
@@ -21,8 +20,9 @@ public class GestureParser extends GestureDetector.SimpleOnGestureListener {
     private static final double CRITICAL_VALUE_ROTATE = 3;
 
     private VectorMapView mapView;
-    private MotionEvent.PointerCoords coords1;
-    private MotionEvent.PointerCoords coords2;
+    private MotionEvent.PointerCoords coord1;
+    private MotionEvent.PointerCoords coord2;
+    private VectorMapView.OnMapActionOccurListener listener;
     private double lastScaleMinus = -1;
     private double scaleMinus;
     private double lastRotateDeg = -1;
@@ -35,13 +35,17 @@ public class GestureParser extends GestureDetector.SimpleOnGestureListener {
     private float tmpX;
     private float tmpY;
 
+    public void setListener(VectorMapView.OnMapActionOccurListener listener) {
+        this.listener = listener;
+    }
+
     GestureParser(VectorMapView mapView) {
         if (mapView != null) {
             this.mapView = mapView;
         } else
             throw new NullPointerException("VectorMapView is Null!");
-        coords1 = new MotionEvent.PointerCoords();
-        coords2 = new MotionEvent.PointerCoords();
+        coord1 = new MotionEvent.PointerCoords();
+        coord2 = new MotionEvent.PointerCoords();
     }
 
     @Override
@@ -52,12 +56,12 @@ public class GestureParser extends GestureDetector.SimpleOnGestureListener {
             mapView.mapTranslate(-distanceX, -distanceY);
         } else if (fingerCount == 2) {
 //            得到双指的坐标
-            e2.getPointerCoords(0, coords1);
-            e2.getPointerCoords(1, coords2);
-            centreX = (coords1.x + coords2.x) / 2;
-            centreY = (coords1.y + coords2.y) / 2;
+            e2.getPointerCoords(0, coord1);
+            e2.getPointerCoords(1, coord2);
+            centreX = (coord1.x + coord2.x) / 2;
+            centreY = (coord1.y + coord2.y) / 2;
 //            双指缩放
-            scaleMinus = getDistance(coords1.x, coords1.y, coords2.x, coords2.y);
+            scaleMinus = getDistance(coord1.x, coord1.y, coord2.x, coord2.y);
             if (lastScaleMinus > 0) {
                 if (!isRotating &&
                         allowRotating &&
@@ -68,8 +72,8 @@ public class GestureParser extends GestureDetector.SimpleOnGestureListener {
             }
             lastScaleMinus = scaleMinus;
 //            双指旋转
-            tmpX = coords1.x - coords2.x;
-            tmpY = coords1.y - coords2.y;
+            tmpX = coord1.x - coord2.x;
+            tmpY = coord1.y - coord2.y;
             rotateDeg = -Math.atan2(tmpX, tmpY);
             rotateDeg *= RAD2DEG;
             if (isRotateFirst) {
@@ -100,6 +104,8 @@ public class GestureParser extends GestureDetector.SimpleOnGestureListener {
     @Override
     public boolean onSingleTapConfirmed(MotionEvent e) {
         if (mapView.isAllowClick()) {
+            if (listener != null)
+                listener.onClickMap(e.getX(), e.getY());
             mapView.getIdByPos(e.getX(), e.getY());
         }
         return true;
